@@ -5,16 +5,13 @@ modules = ["nodejs-20"]
 channel = "stable-24_05"
 
 [deployment]
-run = ["sh", "-c", "npm run start"]
-deploymentTarget = "cloudrun"
-
-[[ports]]
-localPort = 3000
-externalPort = 80
+run = ["node", "server/server.js"]
+deploymentTarget = "autoscale"
+build = ["npm", "run", "build"]
 
 [[ports]]
 localPort = 5000
-externalPort = 5000
+externalPort = 80
 
 [userenv]
 
