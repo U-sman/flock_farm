@@ -1,0 +1,6 @@
+{
+  "name": "Poultry Farm Management",
+  "description": "A comprehensive Poultry Farm Management System to track bird registers, mortality, vaccinations, expenses, feed records, and daily egg production.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
