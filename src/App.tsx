@@ -189,9 +189,9 @@ export default function App() {
             </div>
             <div>
               <h1 className="text-sm sm:text-base font-bold font-display tracking-tight flex items-center gap-1 text-slate-800">
-                FeatherFlow <span className="text-indigo-600 italic font-bold">ERP</span>
+                Flock Farm
               </h1>
-              <p className="hidden md:block text-4xs text-slate-400 font-mono tracking-wider mt-0.5 uppercase font-semibold">Commercial Flocks & Financial Accounts Engine</p>
+              <p className="hidden md:block text-4xs text-slate-400 font-mono tracking-wider mt-0.5 uppercase font-semibold">Poultry Farm Management</p>
             </div>
           </div>
 
