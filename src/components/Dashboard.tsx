@@ -183,12 +183,12 @@ export default function Dashboard({
 
           {/* ROI Card */}
           <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 sm:gap-4 hover:border-slate-300 hover:shadow-sm transition duration-150 animate-in fade-in zoom-in-95 duration-150" id="kpi-roi">
-            <div className="p-2 sm:p-3 bg-indigo-50 text-indigo-600 rounded-xl shrink-0">
+            <div className="p-2 sm:p-3 bg-violet-50 text-violet-600 rounded-xl shrink-0">
               <Percent className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div className="min-w-0">
               <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider truncate">ROI %</p>
-              <h4 className={`text-sm sm:text-xl font-bold font-mono mt-0.5 truncate ${roiPercent >= 0 ? 'text-indigo-600' : 'text-rose-600'}`}>
+              <h4 className={`text-sm sm:text-xl font-bold font-mono mt-0.5 truncate ${roiPercent >= 0 ? 'text-violet-600' : 'text-rose-600'}`}>
                 {roiPercent.toFixed(1)}%
               </h4>
               <p className="text-4xs sm:text-3xs text-slate-400 mt-0.5 truncate font-medium italic">High Gain Ratio</p>
@@ -206,7 +206,7 @@ export default function Dashboard({
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
           {/* Active Birds */}
           <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 sm:gap-4 hover:border-slate-300 hover:shadow-sm transition duration-150 animate-in fade-in zoom-in-95 duration-150" id="kpi-active-birds">
-            <div className="p-2 sm:p-3 bg-indigo-50 text-indigo-600 rounded-xl shrink-0">
+            <div className="p-2 sm:p-3 bg-sky-50 text-sky-600 rounded-xl shrink-0">
               <Activity className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div className="min-w-0">
@@ -240,7 +240,7 @@ export default function Dashboard({
 
           {/* Average Eggs/Hen/Day */}
           <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 sm:gap-4 hover:border-slate-300 hover:shadow-sm transition duration-150 animate-in fade-in zoom-in-95 duration-150" id="kpi-egg-efficiency">
-            <div className="p-2 sm:p-3 bg-indigo-50 text-indigo-600 rounded-xl shrink-0">
+            <div className="p-2 sm:p-3 bg-teal-50 text-teal-600 rounded-xl shrink-0">
               <Egg className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div className="min-w-0">
@@ -252,7 +252,7 @@ export default function Dashboard({
 
           {/* Total Eggs Collected */}
           <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 sm:gap-4 hover:border-slate-300 hover:shadow-sm transition duration-150 animate-in fade-in zoom-in-95 duration-150" id="kpi-total-eggs">
-            <div className="p-2 sm:p-3 bg-indigo-50 text-indigo-600 rounded-xl shrink-0">
+            <div className="p-2 sm:p-3 bg-amber-50 text-amber-600 rounded-xl shrink-0">
               <Egg className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div className="min-w-0">
