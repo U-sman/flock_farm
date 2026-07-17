@@ -221,79 +221,39 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main Body Grid Layout */}
-      <div className="max-w-7xl w-full mx-auto p-3 sm:p-6 flex-1 flex flex-col md:flex-row gap-4 md:gap-6 pb-20 md:pb-6">
-        {/* Navigation Rail Container */}
-        <nav className="hidden md:flex md:w-64 shrink-0 bg-white p-4 rounded-2xl border border-slate-200 flex-col gap-1.5 shadow-xs h-fit sticky top-20 z-30" id="sidebar-navigation">
-          <button 
-            onClick={() => setActiveTab('dashboard')}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold tracking-tight transition cursor-pointer w-full text-left shrink-0 ${
-              activeTab === 'dashboard' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950'
-            }`}
-            id="nav-dashboard"
-          >
-            <LayoutDashboard className="w-4 h-4" />
-            <span>Live KPI Dashboard</span>
-          </button>
+      {/* Horizontal Tab Navigation Bar (replaces sidebar) */}
+      <nav
+        className="bg-white border-b border-slate-200 sticky top-14 z-30 px-2 sm:px-6 shadow-xs"
+        id="tab-navigation"
+      >
+        <div className="max-w-7xl w-full mx-auto flex gap-1 overflow-x-auto no-scrollbar">
+          {[
+            { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+            { id: 'flock', label: 'Flock Registry', icon: BirdIcon },
+            { id: 'ledger', label: 'Financial Ledger', icon: DollarSign },
+            { id: 'health', label: 'Health Portal', icon: HeartPulse },
+            { id: 'summary', label: 'Monthly Summaries', icon: CalendarRange },
+            { id: 'settings', label: 'Settings', icon: SettingsIcon },
+          ].map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              onClick={() => setActiveTab(id)}
+              className={`flex items-center gap-2 px-3.5 sm:px-4 py-3 text-xs font-semibold tracking-tight transition cursor-pointer whitespace-nowrap shrink-0 border-b-2 -mb-px ${
+                activeTab === id
+                  ? 'border-indigo-600 text-indigo-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-200'
+              }`}
+              id={`nav-${id}`}
+            >
+              <Icon className="w-4 h-4" />
+              <span>{label}</span>
+            </button>
+          ))}
+        </div>
+      </nav>
 
-          <button 
-            onClick={() => setActiveTab('flock')}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold tracking-tight transition cursor-pointer w-full text-left shrink-0 ${
-              activeTab === 'flock' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950'
-            }`}
-            id="nav-flock"
-          >
-            <BirdIcon className="w-4 h-4" />
-            <span>Flock Registry</span>
-          </button>
-
-          <button 
-            onClick={() => setActiveTab('ledger')}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold tracking-tight transition cursor-pointer w-full text-left shrink-0 ${
-              activeTab === 'ledger' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950'
-            }`}
-            id="nav-ledger"
-          >
-            <DollarSign className="w-4 h-4" />
-            <span>Financial Ledger</span>
-          </button>
-
-          <button 
-            onClick={() => setActiveTab('health')}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold tracking-tight transition cursor-pointer w-full text-left shrink-0 ${
-              activeTab === 'health' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950'
-            }`}
-            id="nav-health"
-          >
-            <HeartPulse className="w-4 h-4" />
-            <span>Health Portal</span>
-          </button>
-
-          <button 
-            onClick={() => setActiveTab('summary')}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold tracking-tight transition cursor-pointer w-full text-left shrink-0 ${
-              activeTab === 'summary' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950'
-            }`}
-            id="nav-summary"
-          >
-            <CalendarRange className="w-4 h-4" />
-            <span>Monthly Summaries</span>
-          </button>
-
-          <div className="border-t border-slate-100 my-2 pt-2 hidden md:block" />
-
-          <button 
-            onClick={() => setActiveTab('settings')}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold tracking-tight transition cursor-pointer w-full text-left shrink-0 ${
-              activeTab === 'settings' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950'
-            }`}
-            id="nav-settings"
-          >
-            <SettingsIcon className="w-4 h-4" />
-            <span>App Settings</span>
-          </button>
-        </nav>
-
+      {/* Main Content Area (full width, no sidebar) */}
+      <div className="max-w-7xl w-full mx-auto p-3 sm:p-6 flex-1 flex flex-col gap-4 md:gap-6">
         {/* Content Box Container */}
         <main className="flex-1 bg-white p-3.5 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs min-w-0" id="main-content-window">
           {activeTab === 'dashboard' && (
@@ -365,64 +325,6 @@ export default function App() {
           )}
         </main>
       </div>
-
-      {/* Mobile Sticky Bottom Navigation Bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 flex justify-around items-center py-2 px-1 shadow-[0_-4px_12px_rgba(0,0,0,0.06)]" id="mobile-navigation">
-        <button 
-          onClick={() => setActiveTab('dashboard')}
-          className={`flex flex-col items-center gap-1 py-1 px-3.5 rounded-xl text-[10px] font-bold transition-all cursor-pointer ${
-            activeTab === 'dashboard' ? 'text-indigo-600 scale-105' : 'text-slate-400'
-          }`}
-          id="btn-mob-nav-dashboard"
-        >
-          <LayoutDashboard className="w-5 h-5" />
-          <span>Dashboard</span>
-        </button>
-
-        <button 
-          onClick={() => setActiveTab('flock')}
-          className={`flex flex-col items-center gap-1 py-1 px-3.5 rounded-xl text-[10px] font-bold transition-all cursor-pointer ${
-            activeTab === 'flock' ? 'text-indigo-600 scale-105' : 'text-slate-400'
-          }`}
-          id="btn-mob-nav-flock"
-        >
-          <BirdIcon className="w-5 h-5" />
-          <span>Registry</span>
-        </button>
-
-        <button 
-          onClick={() => setActiveTab('ledger')}
-          className={`flex flex-col items-center gap-1 py-1 px-3.5 rounded-xl text-[10px] font-bold transition-all cursor-pointer ${
-            activeTab === 'ledger' ? 'text-indigo-600 scale-105' : 'text-slate-400'
-          }`}
-          id="btn-mob-nav-ledger"
-        >
-          <DollarSign className="w-5 h-5" />
-          <span>Ledger</span>
-        </button>
-
-        <button 
-          onClick={() => setActiveTab('health')}
-          className={`flex flex-col items-center gap-1 py-1 px-3.5 rounded-xl text-[10px] font-bold transition-all cursor-pointer ${
-            activeTab === 'health' ? 'text-indigo-600 scale-105' : 'text-slate-400'
-          }`}
-          id="btn-mob-nav-health"
-        >
-          <HeartPulse className="w-5 h-5" />
-          <span>Health</span>
-        </button>
-
-        <button 
-          onClick={() => setActiveTab('summary')}
-          className={`flex flex-col items-center gap-1 py-1 px-3.5 rounded-xl text-[10px] font-bold transition-all cursor-pointer ${
-            activeTab === 'summary' ? 'text-indigo-600 scale-105' : 'text-slate-400'
-          }`}
-          id="btn-mob-nav-summary"
-        >
-          <CalendarRange className="w-5 h-5" />
-          <span>Summary</span>
-        </button>
-      </nav>
 
       {/* Small Legal / Footer */}
       <footer className="bg-white text-slate-400 text-center py-4 text-4xs font-mono border-t border-slate-200 shadow-xs mt-auto">

@@ -21,3 +21,12 @@ h1, h2, h3, h4, .display-font {
 .mono-font {
   font-family: var(--font-mono);
 }
+
+/* Hides scrollbar for the horizontal tab bar while keeping it scrollable */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
