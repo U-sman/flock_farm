@@ -170,7 +170,7 @@ export default function SettingsPanel({
               id="btn-export-egg-pdf"
             >
               <FileText className="w-4 h-4" />
-              <span>Egg PDF</span>
+              <span>Egg Report (Print/PDF)</span>
             </button>
 
             <button
@@ -179,7 +179,7 @@ export default function SettingsPanel({
               id="btn-export-expense-pdf"
             >
               <FileText className="w-4 h-4" />
-              <span>Expense PDF</span>
+              <span>Expense Report (Print/PDF)</span>
             </button>
 
             <button
@@ -188,7 +188,7 @@ export default function SettingsPanel({
               id="btn-export-egg-excel"
             >
               <FileSpreadsheet className="w-4 h-4" />
-              <span>Egg Excel</span>
+              <span>Egg CSV</span>
             </button>
 
             <button
@@ -197,7 +197,7 @@ export default function SettingsPanel({
               id="btn-export-expense-excel"
             >
               <FileSpreadsheet className="w-4 h-4" />
-              <span>Expense Excel</span>
+              <span>Expense CSV</span>
             </button>
 
             <button
@@ -206,7 +206,7 @@ export default function SettingsPanel({
               id="btn-export-monthly-summary-pdf"
             >
               <FileText className="w-4 h-4" />
-              <span>Monthly Summary PDF</span>
+              <span>Monthly Summary (Print/PDF)</span>
             </button>
           </div>
         </div>
