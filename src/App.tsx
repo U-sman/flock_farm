@@ -8,7 +8,9 @@ import {
   Settings as SettingsIcon,
   Activity,
   User,
-  Egg
+  Egg,
+  Moon,
+  Sun
 } from 'lucide-react';
 
 import { 
@@ -38,6 +40,16 @@ import { loadData, saveData } from './api';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('dashboard');
+
+  // --- DARK MODE (UI preference only, saved on this device, not MongoDB) ---
+  const [isDark, setIsDark] = useState<boolean>(() => {
+    return localStorage.getItem('flockfarm_dark_mode') === 'true';
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDark);
+    localStorage.setItem('flockfarm_dark_mode', String(isDark));
+  }, [isDark]);
 
   // --- STATE PERSISTENCE LOGIC (MONGODB, VIA BACKEND API) ---
   const [birds, setBirds] = useState<Bird[]>(INITIAL_BIRDS);
@@ -178,40 +190,51 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans" id="app-root">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans transition-colors duration-200" id="app-root">
       {/* Top Application Header Bar */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-40 px-4 sm:px-6 py-2.5 h-14 flex items-center justify-between shadow-xs">
+      <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 px-4 sm:px-6 py-2.5 h-14 flex items-center justify-between shadow-xs transition-colors duration-200">
         <div className="max-w-7xl w-full mx-auto flex items-center justify-between gap-3">
           {/* Logo Brand */}
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-xs shrink-0">
+            <div className="w-8 h-8 bg-green-700 rounded-lg flex items-center justify-center text-white shadow-xs shrink-0">
               <BirdIcon className="w-4.5 h-4.5" />
             </div>
             <div>
-              <h1 className="text-sm sm:text-base font-bold font-display tracking-tight flex items-center gap-1 text-slate-800">
+              <h1 className="text-sm sm:text-base font-bold font-display tracking-tight flex items-center gap-1 text-slate-800 dark:text-slate-100">
                 Flock Farm
               </h1>
-              <p className="hidden md:block text-4xs text-slate-400 font-mono tracking-wider mt-0.5 uppercase font-semibold">Poultry Farm Management</p>
+              <p className="hidden md:block text-4xs text-slate-400 dark:text-slate-500 font-mono tracking-wider mt-0.5 uppercase font-semibold">Poultry Farm Management</p>
             </div>
           </div>
 
           {/* User Status / Info Badge */}
           <div className="flex items-center gap-3 text-xs">
-            <span className="hidden md:inline bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg text-3xs font-mono text-slate-500 font-semibold">
-              📅 Today: <span className="font-bold text-slate-700">2026-07-15</span>
+            <span className="hidden md:inline bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-1 rounded-lg text-3xs font-mono text-slate-500 dark:text-slate-400 font-semibold">
+              📅 Today: <span className="font-bold text-slate-700 dark:text-slate-200">2026-07-15</span>
             </span>
+
+            {/* Dark Mode Toggle */}
+            <button
+              onClick={() => setIsDark(!isDark)}
+              title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              className="w-8 h-8 rounded-full flex items-center justify-center border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all cursor-pointer shrink-0"
+              id="btn-dark-mode-toggle"
+            >
+              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+
             <div className="flex items-center gap-2 text-right">
               <div className="hidden sm:flex flex-col items-end">
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Session Admin</span>
-                <span className="text-xs font-semibold text-slate-700">mu68383637@gmail.com</span>
+                <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Session Admin</span>
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">mu68383637@gmail.com</span>
               </div>
               <button 
                 onClick={() => setActiveTab('settings')}
                 title="Open App Settings"
                 className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs uppercase shadow-xs cursor-pointer border transition-all ${
                   activeTab === 'settings' 
-                    ? 'bg-indigo-600 text-white border-indigo-700' 
-                    : 'bg-indigo-50 text-indigo-600 border-indigo-100 hover:bg-indigo-100'
+                    ? 'bg-green-700 text-white border-green-800' 
+                    : 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400 border-green-100 dark:border-green-900 hover:bg-green-100 dark:hover:bg-green-900'
                 }`}
               >
                 PF
@@ -223,7 +246,7 @@ export default function App() {
 
       {/* Horizontal Tab Navigation Bar (replaces sidebar) */}
       <nav
-        className="bg-white border-b border-slate-200 sticky top-14 z-30 px-2 sm:px-6 shadow-xs"
+        className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-14 z-30 px-2 sm:px-6 shadow-xs transition-colors duration-200"
         id="tab-navigation"
       >
         <div className="max-w-7xl w-full mx-auto flex gap-1 overflow-x-auto no-scrollbar">
@@ -240,8 +263,8 @@ export default function App() {
               onClick={() => setActiveTab(id)}
               className={`flex items-center gap-2 px-3.5 sm:px-4 py-3 text-xs font-semibold tracking-tight transition cursor-pointer whitespace-nowrap shrink-0 border-b-2 -mb-px ${
                 activeTab === id
-                  ? 'border-indigo-600 text-indigo-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-200'
+                  ? 'border-green-700 text-green-700 dark:text-green-400 dark:border-green-400'
+                  : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:border-slate-200 dark:hover:border-slate-700'
               }`}
               id={`nav-${id}`}
             >
@@ -255,7 +278,7 @@ export default function App() {
       {/* Main Content Area (full width, no sidebar) */}
       <div className="max-w-7xl w-full mx-auto p-3 sm:p-6 flex-1 flex flex-col gap-4 md:gap-6">
         {/* Content Box Container */}
-        <main className="flex-1 bg-white p-3.5 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs min-w-0" id="main-content-window">
+        <main className="flex-1 bg-white dark:bg-slate-900 p-3.5 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs min-w-0 transition-colors duration-200" id="main-content-window">
           {activeTab === 'dashboard' && (
             <Dashboard 
               birds={birds}
@@ -327,7 +350,7 @@ export default function App() {
       </div>
 
       {/* Small Legal / Footer */}
-      <footer className="bg-white text-slate-400 text-center py-4 text-4xs font-mono border-t border-slate-200 shadow-xs mt-auto">
+      <footer className="bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-500 text-center py-4 text-4xs font-mono border-t border-slate-200 dark:border-slate-800 shadow-xs mt-auto transition-colors duration-200">
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center flex-wrap gap-2">
           <span>Poultry Farm Management System &copy; 2026. All rights reserved.</span>
           <span>Crafted for mu68383637@gmail.com</span>

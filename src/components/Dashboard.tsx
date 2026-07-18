@@ -11,7 +11,12 @@ import {
   HeartPulse,
   ShoppingBag,
   Coins,
-  Settings
+  Settings,
+  ChevronDown,
+  ChevronUp,
+  Syringe,
+  Package,
+  CalendarClock
 } from 'lucide-react';
 import { Bird, OtherExpense, FeedRecord, EggProduction, GlobalSettings } from '../types';
 import { motion } from 'motion/react';
@@ -83,6 +88,43 @@ export default function Dashboard({
   const showHighMortality = mortalityRatePercent > 10;
   const showFinancialDeficit = netProfitLoss < -5000;
 
+  // --- Dashboard simplification: hide secondary metrics behind a toggle ---
+  const [showMore, setShowMore] = useState(false);
+
+  // --- Upcoming & Reminders (vaccination schedule + feed restock) ---
+  const today = new Date();
+  const intervalMs = settings.vaccinationIntervalDays * 24 * 60 * 60 * 1000;
+
+  const vaccinationReminders = birds
+    .filter(b => b.status === 'Active')
+    .map(b => {
+      const last = b.lastVaccinationDate ? new Date(b.lastVaccinationDate) : null;
+      const nextDue = last ? new Date(last.getTime() + intervalMs) : null;
+      const daysUntilDue = nextDue
+        ? Math.ceil((nextDue.getTime() - today.getTime()) / (24 * 60 * 60 * 1000))
+        : null; // null = never vaccinated, treat as overdue
+      return { bird: b, nextDue, daysUntilDue };
+    })
+    .filter(r => r.daysUntilDue === null || r.daysUntilDue <= 7)
+    .sort((a, b) => (a.daysUntilDue ?? -9999) - (b.daysUntilDue ?? -9999))
+    .slice(0, 4);
+
+  const feedTypesPurchased = Array.from(new Set(feedRecords.map(f => f.feedType)));
+  const feedRestockReminders = feedTypesPurchased
+    .map(type => {
+      const records = feedRecords
+        .filter(f => f.feedType === type)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      const lastDate = records[0].date;
+      const daysSince = Math.floor((today.getTime() - new Date(lastDate).getTime()) / (24 * 60 * 60 * 1000));
+      return { type, lastDate, daysSince };
+    })
+    .filter(r => r.daysSince >= 14)
+    .sort((a, b) => b.daysSince - a.daysSince)
+    .slice(0, 4);
+
+  const hasReminders = vaccinationReminders.length > 0 || feedRestockReminders.length > 0;
+
   return (
     <div className="space-y-8" id="dashboard-tab">
       {/* Smart Alerts Engine */}
@@ -138,7 +180,7 @@ export default function Dashboard({
           <span className="text-xs text-slate-500 font-mono font-medium">Egg Price: Rs {settings.defaultPricePerEgg} / egg</span>
         </div>
         
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
           {/* Income Card */}
           <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 sm:gap-4 hover:border-slate-300 hover:shadow-sm transition duration-150 animate-in fade-in zoom-in-95 duration-150" id="kpi-total-income">
             <div className="p-2 sm:p-3 bg-emerald-50 text-emerald-600 rounded-xl shrink-0">
@@ -181,27 +223,42 @@ export default function Dashboard({
             </div>
           </div>
 
-          {/* ROI Card */}
-          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 sm:gap-4 hover:border-slate-300 hover:shadow-sm transition duration-150 animate-in fade-in zoom-in-95 duration-150" id="kpi-roi">
-            <div className="p-2 sm:p-3 bg-violet-50 text-violet-600 rounded-xl shrink-0">
-              <Percent className="w-5 h-5 sm:w-6 sm:h-6" />
+          {/* ROI Card (secondary metric, behind "Show more") */}
+          {showMore && (
+            <div className="bg-white dark:bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs flex items-center gap-3 sm:gap-4 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-sm transition duration-150 animate-in fade-in zoom-in-95 duration-150" id="kpi-roi">
+              <div className="p-2 sm:p-3 bg-violet-50 dark:bg-violet-950 text-violet-600 dark:text-violet-400 rounded-xl shrink-0">
+                <Percent className="w-5 h-5 sm:w-6 sm:h-6" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-2xs sm:text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider truncate">ROI %</p>
+                <h4 className={`text-sm sm:text-xl font-bold font-mono mt-0.5 truncate ${roiPercent >= 0 ? 'text-violet-600 dark:text-violet-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                  {roiPercent.toFixed(1)}%
+                </h4>
+                <p className="text-4xs sm:text-3xs text-slate-400 dark:text-slate-500 mt-0.5 truncate font-medium italic">High Gain Ratio</p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider truncate">ROI %</p>
-              <h4 className={`text-sm sm:text-xl font-bold font-mono mt-0.5 truncate ${roiPercent >= 0 ? 'text-violet-600' : 'text-rose-600'}`}>
-                {roiPercent.toFixed(1)}%
-              </h4>
-              <p className="text-4xs sm:text-3xs text-slate-400 mt-0.5 truncate font-medium italic">High Gain Ratio</p>
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
       {/* KPI Section 2: Flock & Health overview */}
       <div className="space-y-4">
-        <h3 className="text-xs font-bold tracking-wider uppercase text-slate-400 font-mono">
-          Flock & Productivity Metrics
-        </h3>
+        <div className="flex justify-between items-center">
+          <h3 className="text-xs font-bold tracking-wider uppercase text-slate-400 dark:text-slate-500 font-mono">
+            Flock & Productivity Metrics
+          </h3>
+          <button
+            onClick={() => setShowMore(!showMore)}
+            className="flex items-center gap-1 text-2xs font-semibold text-green-700 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 cursor-pointer"
+            id="btn-toggle-show-more"
+          >
+            {showMore ? (
+              <>Show less <ChevronUp className="w-3.5 h-3.5" /></>
+            ) : (
+              <>Show more metrics <ChevronDown className="w-3.5 h-3.5" /></>
+            )}
+          </button>
+        </div>
         
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
           {/* Active Birds */}
@@ -238,74 +295,130 @@ export default function Dashboard({
             </div>
           </div>
 
-          {/* Average Eggs/Hen/Day */}
-          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 sm:gap-4 hover:border-slate-300 hover:shadow-sm transition duration-150 animate-in fade-in zoom-in-95 duration-150" id="kpi-egg-efficiency">
-            <div className="p-2 sm:p-3 bg-teal-50 text-teal-600 rounded-xl shrink-0">
-              <Egg className="w-5 h-5 sm:w-6 sm:h-6" />
+          {/* Average Eggs/Hen/Day (secondary metric) */}
+          {showMore && (
+            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 sm:gap-4 hover:border-slate-300 hover:shadow-sm transition duration-150 animate-in fade-in zoom-in-95 duration-150" id="kpi-egg-efficiency">
+              <div className="p-2 sm:p-3 bg-teal-50 text-teal-600 rounded-xl shrink-0">
+                <Egg className="w-5 h-5 sm:w-6 sm:h-6" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider truncate">Avg Eggs/Hen</p>
+                <h4 className="text-sm sm:text-xl font-bold font-mono text-slate-800 mt-0.5 truncate">{avgEggsPerHenPerDay.toFixed(2)}</h4>
+                <p className="text-4xs sm:text-3xs text-slate-400 mt-0.5 truncate">{activeFemaleBirdsCount} hens laying</p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider truncate">Avg Eggs/Hen</p>
-              <h4 className="text-sm sm:text-xl font-bold font-mono text-slate-800 mt-0.5 truncate">{avgEggsPerHenPerDay.toFixed(2)}</h4>
-              <p className="text-4xs sm:text-3xs text-slate-400 mt-0.5 truncate">{activeFemaleBirdsCount} hens laying</p>
-            </div>
-          </div>
+          )}
 
-          {/* Total Eggs Collected */}
-          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 sm:gap-4 hover:border-slate-300 hover:shadow-sm transition duration-150 animate-in fade-in zoom-in-95 duration-150" id="kpi-total-eggs">
-            <div className="p-2 sm:p-3 bg-amber-50 text-amber-600 rounded-xl shrink-0">
-              <Egg className="w-5 h-5 sm:w-6 sm:h-6" />
+          {/* Total Eggs Collected (secondary metric) */}
+          {showMore && (
+            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 sm:gap-4 hover:border-slate-300 hover:shadow-sm transition duration-150 animate-in fade-in zoom-in-95 duration-150" id="kpi-total-eggs">
+              <div className="p-2 sm:p-3 bg-amber-50 text-amber-600 rounded-xl shrink-0">
+                <Egg className="w-5 h-5 sm:w-6 sm:h-6" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider truncate">Total Eggs</p>
+                <h4 className="text-sm sm:text-xl font-bold font-mono text-slate-800 mt-0.5 truncate">{totalEggsCollected}</h4>
+                <p className="text-4xs sm:text-3xs text-slate-400 mt-0.5 truncate">{uniqueDaysCount} logging days</p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider truncate">Total Eggs</p>
-              <h4 className="text-sm sm:text-xl font-bold font-mono text-slate-800 mt-0.5 truncate">{totalEggsCollected}</h4>
-              <p className="text-4xs sm:text-3xs text-slate-400 mt-0.5 truncate">{uniqueDaysCount} logging days</p>
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
+      {/* Upcoming & Reminders: vaccination schedule + feed restock timeline */}
+      {hasReminders && (
+        <div className="space-y-4">
+          <h3 className="text-xs font-bold tracking-wider uppercase text-slate-400 font-mono">
+            Upcoming & Reminders
+          </h3>
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs divide-y divide-slate-100">
+            {vaccinationReminders.map(({ bird, daysUntilDue }) => (
+              <div key={`vax-${bird.id}`} className="flex items-center gap-3 p-4">
+                <div className={`p-2 rounded-lg shrink-0 ${
+                  daysUntilDue === null || daysUntilDue < 0 ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'
+                }`}>
+                  <Syringe className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-slate-800 truncate">{bird.name} &mdash; Vaccination</p>
+                  <p className="text-3xs text-slate-400 mt-0.5">
+                    {daysUntilDue === null
+                      ? 'Never vaccinated'
+                      : daysUntilDue < 0
+                        ? `Overdue by ${Math.abs(daysUntilDue)} day${Math.abs(daysUntilDue) === 1 ? '' : 's'}`
+                        : daysUntilDue === 0
+                          ? 'Due today'
+                          : `Due in ${daysUntilDue} day${daysUntilDue === 1 ? '' : 's'}`}
+                  </p>
+                </div>
+                <span className={`text-3xs font-bold font-mono px-2 py-0.5 rounded shrink-0 ${
+                  daysUntilDue === null || daysUntilDue < 0 ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'
+                }`}>
+                  {daysUntilDue === null || daysUntilDue < 0 ? 'OVERDUE' : 'DUE SOON'}
+                </span>
+              </div>
+            ))}
+
+            {feedRestockReminders.map(({ type, daysSince }) => (
+              <div key={`feed-${type}`} className="flex items-center gap-3 p-4">
+                <div className="p-2 rounded-lg shrink-0 bg-orange-50 text-orange-600">
+                  <Package className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-slate-800 truncate">{type} &mdash; Restock Feed</p>
+                  <p className="text-3xs text-slate-400 mt-0.5">Last bought {daysSince} days ago</p>
+                </div>
+                <span className="text-3xs font-bold font-mono px-2 py-0.5 rounded shrink-0 bg-orange-50 text-orange-700">
+                  RESTOCK
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Quick Action Trigger Panel */}
-      <div className="bg-indigo-900 rounded-2xl p-6 relative overflow-hidden shadow-xs">
+      <div className="bg-green-900 rounded-2xl p-6 relative overflow-hidden shadow-xs">
         <div className="absolute right-0 bottom-0 translate-x-12 translate-y-12 opacity-10 pointer-events-none">
           <Activity className="w-72 h-72 text-white" />
         </div>
         <div className="relative z-10 space-y-4">
           <div>
             <h3 className="text-base font-bold font-display text-white">Daily Egg & Feed Pulse</h3>
-            <p className="text-xs text-indigo-200 mt-1">Record purchases, update sales, log active flocks and ensure continuous feed stock.</p>
+            <p className="text-xs text-green-200 mt-1">Record purchases, update sales, log active flocks and ensure continuous feed stock.</p>
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <button 
               onClick={() => openQuickAction('bird')} 
-              className="flex items-center justify-center gap-2 p-2.5 bg-indigo-800 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs border border-indigo-700 transition duration-150 shadow-xs cursor-pointer"
+              className="flex items-center justify-center gap-2 p-2.5 bg-green-800 hover:bg-green-700 text-white rounded-xl font-bold text-xs border border-green-700 transition duration-150 shadow-xs cursor-pointer"
               id="btn-quick-log-bird"
             >
-              <Plus className="w-4 h-4 text-indigo-300" />
+              <Plus className="w-4 h-4 text-green-300" />
               <span>Log Bird</span>
             </button>
             <button 
               onClick={() => openQuickAction('egg')} 
-              className="flex items-center justify-center gap-2 p-2.5 bg-indigo-800 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs border border-indigo-700 transition duration-150 shadow-xs cursor-pointer"
+              className="flex items-center justify-center gap-2 p-2.5 bg-green-800 hover:bg-green-700 text-white rounded-xl font-bold text-xs border border-green-700 transition duration-150 shadow-xs cursor-pointer"
               id="btn-quick-log-eggs"
             >
-              <Plus className="w-4 h-4 text-indigo-300" />
+              <Plus className="w-4 h-4 text-green-300" />
               <span>Log Daily Eggs</span>
             </button>
             <button 
               onClick={() => openQuickAction('expense')} 
-              className="flex items-center justify-center gap-2 p-2.5 bg-indigo-800 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs border border-indigo-700 transition duration-150 shadow-xs cursor-pointer"
+              className="flex items-center justify-center gap-2 p-2.5 bg-green-800 hover:bg-green-700 text-white rounded-xl font-bold text-xs border border-green-700 transition duration-150 shadow-xs cursor-pointer"
               id="btn-quick-log-expense"
             >
-              <Plus className="w-4 h-4 text-indigo-300" />
+              <Plus className="w-4 h-4 text-green-300" />
               <span>Log Other Expense</span>
             </button>
             <button 
               onClick={() => openQuickAction('feed')} 
-              className="flex items-center justify-center gap-2 p-2.5 bg-indigo-800 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs border border-indigo-700 transition duration-150 shadow-xs cursor-pointer"
+              className="flex items-center justify-center gap-2 p-2.5 bg-green-800 hover:bg-green-700 text-white rounded-xl font-bold text-xs border border-green-700 transition duration-150 shadow-xs cursor-pointer"
               id="btn-quick-log-feed"
             >
-              <Plus className="w-4 h-4 text-indigo-300" />
+              <Plus className="w-4 h-4 text-green-300" />
               <span>Log Feed Purchase</span>
             </button>
           </div>
@@ -320,7 +433,7 @@ export default function Dashboard({
             <h4 className="font-bold text-sm text-slate-800 font-display">Recent Operations</h4>
             <button 
               onClick={() => onNavigate('ledger')} 
-              className="text-xs text-indigo-600 hover:text-indigo-700 hover:underline font-semibold"
+              className="text-xs text-green-700 hover:text-green-800 hover:underline font-semibold"
             >
               View Ledger
             </button>
@@ -394,7 +507,7 @@ export default function Dashboard({
               </div>
               <div className="w-full bg-slate-50 h-2 rounded-full overflow-hidden">
                 <div 
-                  className="bg-indigo-400 h-full rounded-full" 
+                  className="bg-sky-500 h-full rounded-full" 
                   style={{ width: `${totalExpense > 0 ? (totalBirdPurchaseCost / totalExpense) * 100 : 0}%` }}
                 />
               </div>
@@ -408,7 +521,7 @@ export default function Dashboard({
               </div>
               <div className="w-full bg-slate-50 h-2 rounded-full overflow-hidden">
                 <div 
-                  className="bg-indigo-600 h-full rounded-full" 
+                  className="bg-amber-500 h-full rounded-full" 
                   style={{ width: `${totalExpense > 0 ? (totalFeedCost / totalExpense) * 100 : 0}%` }}
                 />
               </div>
@@ -439,7 +552,7 @@ export default function Dashboard({
                   {deadBirdsCount} Deceased
                 </span>
                 {soldBirdsCount > 0 && (
-                  <span className="px-2 py-0.5 bg-indigo-50 text-indigo-800 border border-indigo-100 rounded text-3xs font-bold">
+                  <span className="px-2 py-0.5 bg-sky-50 text-sky-800 border border-sky-100 rounded text-3xs font-bold">
                     {soldBirdsCount} Sold
                   </span>
                 )}
