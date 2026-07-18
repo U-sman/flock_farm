@@ -21,13 +21,6 @@ import {
   INITIAL_EGG_PRODUCTION 
 } from './initialData';
 
-import {
-  IMPORTED_BIRDS,
-  IMPORTED_EXPENSES,
-  IMPORTED_FEED_RECORDS,
-  IMPORTED_EGG_PRODUCTION
-} from './importedFarmData';
-
 import { 
   Bird, 
   OtherExpense, 
@@ -127,15 +120,20 @@ export default function App() {
     });
   };
 
-  // Imports the real farm records extracted from the uploaded Excel file.
-  // This REPLACES current birds/expenses/feed data with the real records
-  // (does not touch egg production, since none were logged in that file).
-  const handleImportRealFarmData = () => {
-    setBirds(IMPORTED_BIRDS);
-    setOtherExpenses(IMPORTED_EXPENSES);
-    setFeedRecords(IMPORTED_FEED_RECORDS);
-    // Egg sheet in the Excel file had no logged entries, so we leave
-    // whatever egg records already exist untouched rather than wiping them.
+  // Restores all app data from a previously downloaded backup JSON file.
+  // Used by the Backup & Restore panel in Settings.
+  const handleRestoreBackup = (data: {
+    birds?: Bird[];
+    otherExpenses?: OtherExpense[];
+    feedRecords?: FeedRecord[];
+    eggProduction?: EggProduction[];
+    settings?: GlobalSettings;
+  }) => {
+    if (data.birds) setBirds(data.birds);
+    if (data.otherExpenses) setOtherExpenses(data.otherExpenses);
+    if (data.feedRecords) setFeedRecords(data.feedRecords);
+    if (data.eggProduction) setEggProduction(data.eggProduction);
+    if (data.settings) setSettings(data.settings);
   };
 
   // --- FLOCK WORKFLOW HANDLERS ---
@@ -359,10 +357,14 @@ export default function App() {
           {activeTab === 'settings' && (
             <SettingsPanel 
               settings={settings}
+              birds={birds}
+              otherExpenses={otherExpenses}
+              feedRecords={feedRecords}
+              eggProduction={eggProduction}
               onSaveSettings={setSettings}
               onResetDatabase={handleResetDatabase}
               onClearDatabase={handleClearDatabase}
-              onImportRealFarmData={handleImportRealFarmData}
+              onRestoreBackup={handleRestoreBackup}
             />
           )}
         </main>

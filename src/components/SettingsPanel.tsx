@@ -1,25 +1,69 @@
-import React, { useState } from 'react';
-import { Settings, Save, RotateCcw, AlertTriangle, ShieldCheck, Check, Upload } from 'lucide-react';
-import { GlobalSettings } from '../types';
+import React, { useState, useRef } from 'react';
+import { 
+  Settings, Save, RotateCcw, AlertTriangle, ShieldCheck, Check, 
+  FileText, FileSpreadsheet, Download, Upload, ClipboardList
+} from 'lucide-react';
+import { Bird, OtherExpense, FeedRecord, EggProduction, GlobalSettings } from '../types';
+import {
+  exportEggPDF,
+  exportExpensePDF,
+  exportMonthlySummaryPDF,
+  exportEggExcel,
+  exportExpenseExcel,
+  downloadBackup,
+  parseBackupFile,
+} from '../reportExport';
 
 interface SettingsPanelProps {
   settings: GlobalSettings;
+  birds: Bird[];
+  otherExpenses: OtherExpense[];
+  feedRecords: FeedRecord[];
+  eggProduction: EggProduction[];
   onSaveSettings: (settings: GlobalSettings) => void;
   onResetDatabase: () => void;
   onClearDatabase: () => void;
-  onImportRealFarmData: () => void;
+  onRestoreBackup: (data: {
+    birds?: Bird[];
+    otherExpenses?: OtherExpense[];
+    feedRecords?: FeedRecord[];
+    eggProduction?: EggProduction[];
+    settings?: GlobalSettings;
+  }) => void;
 }
 
 export default function SettingsPanel({
   settings,
+  birds,
+  otherExpenses,
+  feedRecords,
+  eggProduction,
   onSaveSettings,
   onResetDatabase,
   onClearDatabase,
-  onImportRealFarmData
+  onRestoreBackup
 }: SettingsPanelProps) {
   const [eggPrice, setEggPrice] = useState(settings.defaultPricePerEgg.toString());
   const [vacInterval, setVacInterval] = useState(settings.vaccinationIntervalDays.toString());
   const [showSuccess, setShowSuccess] = useState(false);
+  const restoreInputRef = useRef<HTMLInputElement>(null);
+
+  const handleRestoreFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const backup = await parseBackupFile(file);
+      if (confirm(`Restore backup from ${backup.exportedAt?.slice(0, 10) || 'this file'}? This will replace your current Birds, Ledger, and Egg records.`)) {
+        onRestoreBackup(backup);
+        alert('Backup restored successfully!');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Could not read that backup file.');
+    } finally {
+      // reset so the same file can be re-selected later if needed
+      e.target.value = '';
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,29 +158,95 @@ export default function SettingsPanel({
           </form>
         </div>
 
-        {/* One-time import of real farm records from Excel */}
-        <div className="bg-white p-6 rounded-2xl border border-emerald-200 shadow-xs space-y-4 md:col-span-2">
+        {/* Export Reports */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4 md:col-span-3">
           <h3 className="font-bold text-sm text-slate-800 font-display flex items-center gap-2 border-b border-slate-100 pb-3">
-            <Upload className="w-5 h-5 text-emerald-600" /> Import Real Farm Records
+            <ClipboardList className="w-5 h-5 text-teal-600" /> Export Reports
+          </h3>
+          <div className="flex flex-wrap gap-2.5">
+            <button
+              onClick={() => exportEggPDF(eggProduction, settings)}
+              className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs rounded-full transition cursor-pointer shadow-2xs"
+              id="btn-export-egg-pdf"
+            >
+              <FileText className="w-4 h-4" />
+              <span>Egg PDF</span>
+            </button>
+
+            <button
+              onClick={() => exportExpensePDF(otherExpenses, feedRecords)}
+              className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs rounded-full transition cursor-pointer shadow-2xs"
+              id="btn-export-expense-pdf"
+            >
+              <FileText className="w-4 h-4" />
+              <span>Expense PDF</span>
+            </button>
+
+            <button
+              onClick={() => exportEggExcel(eggProduction, settings)}
+              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-teal-50 border border-teal-200 text-teal-700 font-semibold text-xs rounded-full transition cursor-pointer"
+              id="btn-export-egg-excel"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              <span>Egg Excel</span>
+            </button>
+
+            <button
+              onClick={() => exportExpenseExcel(otherExpenses, feedRecords)}
+              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-teal-50 border border-teal-200 text-teal-700 font-semibold text-xs rounded-full transition cursor-pointer"
+              id="btn-export-expense-excel"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              <span>Expense Excel</span>
+            </button>
+
+            <button
+              onClick={() => exportMonthlySummaryPDF(birds, otherExpenses, feedRecords, eggProduction, settings)}
+              className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs rounded-full transition cursor-pointer shadow-2xs"
+              id="btn-export-monthly-summary-pdf"
+            >
+              <FileText className="w-4 h-4" />
+              <span>Monthly Summary PDF</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Backup & Restore */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4 md:col-span-3">
+          <h3 className="font-bold text-sm text-slate-800 font-display flex items-center gap-2 border-b border-slate-100 pb-3">
+            <ShieldCheck className="w-5 h-5 text-teal-600" /> Backup & Restore
           </h3>
           <p className="text-3xs text-slate-500">
-            Loads your real records (21 birds, 6 expenses, 5 feed purchases) from your uploaded Excel file.
-            This <strong>replaces</strong> your current Birds, Financial Ledger, and Feed records with the real data —
-            your egg log is left untouched since no egg entries existed in that file.
+            Download a full backup of all your data (birds, ledger, eggs, settings) as a file you can keep safe.
+            Restore it anytime to bring your data back — on this device or a new one.
           </p>
-          <button
-            onClick={() => {
-              if (confirm('Import your real farm records from Excel? This will replace current Birds, Expenses, and Feed records with the real data. This cannot be undone.')) {
-                onImportRealFarmData();
-                alert('Your real farm records have been imported successfully!');
-              }
-            }}
-            className="w-full sm:w-auto py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl transition cursor-pointer flex items-center justify-center gap-2 shadow-2xs"
-            id="btn-import-real-farm-data"
-          >
-            <Upload className="w-4 h-4" />
-            <span>Import My Excel Farm Data</span>
-          </button>
+          <div className="flex flex-wrap gap-2.5">
+            <button
+              onClick={() => downloadBackup(birds, otherExpenses, feedRecords, eggProduction, settings)}
+              className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs rounded-full transition cursor-pointer shadow-2xs"
+              id="btn-download-backup"
+            >
+              <Download className="w-4 h-4" />
+              <span>Download Backup</span>
+            </button>
+
+            <button
+              onClick={() => restoreInputRef.current?.click()}
+              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-teal-50 border border-teal-200 text-teal-700 font-semibold text-xs rounded-full transition cursor-pointer"
+              id="btn-restore-backup"
+            >
+              <Upload className="w-4 h-4" />
+              <span>Restore Backup</span>
+            </button>
+            <input
+              ref={restoreInputRef}
+              type="file"
+              accept="application/json"
+              onChange={handleRestoreFileSelected}
+              className="hidden"
+              id="input-restore-backup-file"
+            />
+          </div>
         </div>
 
         {/* Database administration panel */}
