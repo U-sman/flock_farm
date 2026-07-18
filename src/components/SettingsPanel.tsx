@@ -174,7 +174,7 @@ export default function SettingsPanel({
             </button>
 
             <button
-              onClick={() => exportExpensePDF(otherExpenses, feedRecords)}
+              onClick={() => exportExpensePDF(birds, otherExpenses, feedRecords)}
               className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs rounded-full transition cursor-pointer shadow-2xs"
               id="btn-export-expense-pdf"
             >
@@ -192,7 +192,7 @@ export default function SettingsPanel({
             </button>
 
             <button
-              onClick={() => exportExpenseExcel(otherExpenses, feedRecords)}
+              onClick={() => exportExpenseExcel(birds, otherExpenses, feedRecords)}
               className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-teal-50 border border-teal-200 text-teal-700 font-semibold text-xs rounded-full transition cursor-pointer"
               id="btn-export-expense-excel"
             >

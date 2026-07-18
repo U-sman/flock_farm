@@ -19,7 +19,12 @@ function escapeCsvCell(value: string | number): string {
 }
 
 /** Opens a print-ready page; user saves as PDF via the browser print dialog. */
-function printReport(title: string, headers: string[], rows: (string | number)[][]): void {
+function printReport(
+  title: string,
+  headers: string[],
+  rows: (string | number)[][],
+  footerRows?: (string | number)[][]
+): void {
   const tableHead = headers.map((h) => `<th>${escapeHtml(h)}</th>`).join('');
   const tableBody = rows
     .map(
@@ -27,6 +32,16 @@ function printReport(title: string, headers: string[], rows: (string | number)[]
         `<tr>${row.map((cell) => `<td>${escapeHtml(String(cell))}</td>`).join('')}</tr>`
     )
     .join('');
+  const tableFoot = footerRows
+    ? `<tfoot>${footerRows
+        .map(
+          (row) =>
+            `<tr class="total">${row
+              .map((cell) => `<td>${escapeHtml(String(cell))}</td>`)
+              .join('')}</tr>`
+        )
+        .join('')}</tfoot>`
+    : '';
 
   const html = `<!DOCTYPE html>
 <html>
@@ -41,6 +56,7 @@ function printReport(title: string, headers: string[], rows: (string | number)[]
     th, td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; }
     th { background: #0d9488; color: #fff; }
     tr:nth-child(even) td { background: #f8fafc; }
+    tfoot tr.total td { font-weight: 700; background: #ecfdf5; border-top: 2px solid #0d9488; }
     @media print {
       body { padding: 0; }
       @page { margin: 12mm; }
@@ -53,6 +69,7 @@ function printReport(title: string, headers: string[], rows: (string | number)[]
   <table>
     <thead><tr>${tableHead}</tr></thead>
     <tbody>${tableBody}</tbody>
+    ${tableFoot}
   </table>
   <script>window.onload = () => window.print();</script>
 </body>
@@ -81,6 +98,52 @@ function downloadCsv(filename: string, headers: string[], rows: (string | number
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+interface ExpenseLineItem {
+  type: string;
+  date: string;
+  detail: string;
+  category: string;
+  amount: number;
+  notes: string;
+}
+
+function buildExpenseLineItems(
+  birds: Bird[],
+  otherExpenses: OtherExpense[],
+  feedRecords: FeedRecord[]
+): ExpenseLineItem[] {
+  return [
+    ...birds.map((b) => ({
+      type: 'Purchase',
+      date: b.dateBought,
+      detail: `Bird: ${b.name}`,
+      category: 'Purchase',
+      amount: b.price || 0,
+      notes: `${b.gender}, ${b.status}`,
+    })),
+    ...otherExpenses.map((o) => ({
+      type: 'Other',
+      date: o.date,
+      detail: o.detail,
+      category: o.category,
+      amount: o.amount,
+      notes: o.notes || '',
+    })),
+    ...feedRecords.map((f) => ({
+      type: 'Feed',
+      date: f.date,
+      detail: `${f.feedType} (${f.quantityKg}kg)`,
+      category: 'Feed',
+      amount: f.quantityKg * f.rateRsPerKg,
+      notes: f.notes || '',
+    })),
+  ].sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function formatRs(amount: number): string {
+  return `Rs ${amount.toLocaleString()}`;
 }
 
 // ---------- PDF EXPORTS (browser print → Save as PDF) ----------
@@ -113,34 +176,29 @@ export function exportEggPDF(eggProduction: EggProduction[], settings: GlobalSet
   ], rows);
 }
 
-export function exportExpensePDF(otherExpenses: OtherExpense[], feedRecords: FeedRecord[]) {
-  const rows = [
-    ...otherExpenses.map((o) => [
-      'Other',
-      o.date,
-      o.detail,
-      o.category,
-      `Rs ${o.amount.toLocaleString()}`,
-      o.notes || '',
-    ]),
-    ...feedRecords.map((f) => [
-      'Feed',
-      f.date,
-      `${f.feedType} (${f.quantityKg}kg)`,
-      'Feed',
-      `Rs ${(f.quantityKg * f.rateRsPerKg).toLocaleString()}`,
-      f.notes || '',
-    ]),
-  ].sort((a, b) => String(a[1]).localeCompare(String(b[1])));
+export function exportExpensePDF(
+  birds: Bird[],
+  otherExpenses: OtherExpense[],
+  feedRecords: FeedRecord[]
+) {
+  const items = buildExpenseLineItems(birds, otherExpenses, feedRecords);
+  const total = items.reduce((sum, item) => sum + item.amount, 0);
 
-  printReport('Flock Farm — Expense Report', [
-    'Type',
-    'Date',
-    'Detail',
-    'Category',
-    'Amount',
-    'Notes',
-  ], rows);
+  const rows = items.map((item) => [
+    item.type,
+    item.date,
+    item.detail,
+    item.category,
+    formatRs(item.amount),
+    item.notes,
+  ]);
+
+  printReport(
+    'Flock Farm — Expense Report',
+    ['Type', 'Date', 'Detail', 'Category', 'Amount', 'Notes'],
+    rows,
+    [['', '', '', 'TOTAL EXPENSES', formatRs(total), '']]
+  );
 }
 
 export function exportMonthlySummaryPDF(
@@ -157,6 +215,14 @@ export function exportMonthlySummaryPDF(
   eggProduction.forEach((e) => e.date && monthsSet.add(e.date.substring(0, 7)));
 
   const months = Array.from(monthsSet).sort((a, b) => a.localeCompare(b));
+
+  let grandBirdCost = 0;
+  let grandFeedCost = 0;
+  let grandOtherCost = 0;
+  let grandTotalExpense = 0;
+  let grandEggIncome = 0;
+  let grandEggsCollected = 0;
+  let grandNetBalance = 0;
 
   const rows = months.map((month) => {
     const birdCost = birds
@@ -176,24 +242,51 @@ export function exportMonthlySummaryPDF(
       .filter((e) => e.date?.startsWith(month))
       .reduce((s, e) => s + e.totalEggsCollected, 0);
     const netBalance = eggIncome - totalExpense;
+
+    grandBirdCost += birdCost;
+    grandFeedCost += feedCost;
+    grandOtherCost += otherCost;
+    grandTotalExpense += totalExpense;
+    grandEggIncome += eggIncome;
+    grandEggsCollected += eggsCollected;
+    grandNetBalance += netBalance;
+
     return [
       month,
       eggsCollected,
-      `Rs ${eggIncome.toLocaleString()}`,
-      `Rs ${feedCost.toLocaleString()}`,
-      `Rs ${totalExpense.toLocaleString()}`,
-      `Rs ${netBalance.toLocaleString()}`,
+      formatRs(eggIncome),
+      formatRs(birdCost),
+      formatRs(feedCost),
+      formatRs(otherCost),
+      formatRs(totalExpense),
+      formatRs(netBalance),
     ];
   });
 
-  printReport('Flock Farm — Monthly Summary Report', [
-    'Month',
-    'Eggs Collected',
-    'Egg Income',
-    'Feed Cost',
-    'Total Expense',
-    'Net Balance',
-  ], rows);
+  printReport(
+    'Flock Farm — Monthly Summary Report',
+    [
+      'Month',
+      'Eggs Collected',
+      'Egg Income',
+      'Bird Purchase',
+      'Feed Cost',
+      'Other Expenses',
+      'Total Expense',
+      'Net Balance',
+    ],
+    rows,
+    [[
+      'TOTAL',
+      grandEggsCollected,
+      formatRs(grandEggIncome),
+      formatRs(grandBirdCost),
+      formatRs(grandFeedCost),
+      formatRs(grandOtherCost),
+      formatRs(grandTotalExpense),
+      formatRs(grandNetBalance),
+    ]]
+  );
 }
 
 // ---------- CSV EXPORTS (opens in Excel / Google Sheets) ----------
@@ -222,25 +315,25 @@ export function exportEggExcel(eggProduction: EggProduction[], settings: GlobalS
   ], rows);
 }
 
-export function exportExpenseExcel(otherExpenses: OtherExpense[], feedRecords: FeedRecord[]) {
+export function exportExpenseExcel(
+  birds: Bird[],
+  otherExpenses: OtherExpense[],
+  feedRecords: FeedRecord[]
+) {
+  const items = buildExpenseLineItems(birds, otherExpenses, feedRecords);
+  const total = items.reduce((sum, item) => sum + item.amount, 0);
+
   const rows = [
-    ...otherExpenses.map((o) => [
-      'Other',
-      o.date,
-      o.detail,
-      o.category,
-      o.amount,
-      o.notes || '',
+    ...items.map((item) => [
+      item.type,
+      item.date,
+      item.detail,
+      item.category,
+      item.amount,
+      item.notes,
     ]),
-    ...feedRecords.map((f) => [
-      'Feed',
-      f.date,
-      `${f.feedType} (${f.quantityKg}kg)`,
-      'Feed',
-      f.quantityKg * f.rateRsPerKg,
-      f.notes || '',
-    ]),
-  ].sort((a, b) => String(a[1]).localeCompare(String(b[1])));
+    ['', '', '', 'TOTAL EXPENSES', total, ''],
+  ];
 
   downloadCsv(`flock-farm-expense-report-${todayStr()}.csv`, [
     'Type',

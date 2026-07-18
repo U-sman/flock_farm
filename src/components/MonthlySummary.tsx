@@ -1,13 +1,8 @@
 import React, { useMemo } from 'react';
 import { 
   CalendarRange, 
-  ArrowRight, 
-  TrendingUp, 
-  TrendingDown, 
   Egg, 
-  DollarSign, 
-  Scale, 
-  Activity 
+  ShoppingBag,
 } from 'lucide-react';
 import { Bird, OtherExpense, FeedRecord, EggProduction, GlobalSettings, MonthlySummaryItem } from '../types';
 
@@ -83,7 +78,9 @@ export default function MonthlySummary({
         eggIncome,
         netBalance,
         eggsCollected,
-        feedCost
+        birdPurchase: birdExpense,
+        feedCost,
+        otherExpenses: otherExpCost,
       };
     });
 
@@ -140,7 +137,7 @@ export default function MonthlySummary({
                   </div>
 
                   {/* Body: Key Indicators */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-2xs py-1.5 font-semibold">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-2xs py-1.5 font-semibold">
                     <div>
                       <span className="text-slate-400 block uppercase font-mono tracking-wider text-3xs mb-0.5">Total Eggs</span>
                       <span className="text-slate-900 font-mono font-bold flex items-center gap-1 text-xs">
@@ -148,12 +145,22 @@ export default function MonthlySummary({
                       </span>
                     </div>
                     <div>
+                      <span className="text-slate-400 block uppercase font-mono tracking-wider text-3xs mb-0.5">Egg Revenue</span>
+                      <span className="text-emerald-700 font-mono text-xs font-bold">Rs {summary.eggIncome.toLocaleString()}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block uppercase font-mono tracking-wider text-3xs mb-0.5">Bird Purchase</span>
+                      <span className="text-slate-800 font-mono text-xs flex items-center gap-1">
+                        <ShoppingBag className="w-3.5 h-3.5 text-indigo-500" /> Rs {summary.birdPurchase.toLocaleString()}
+                      </span>
+                    </div>
+                    <div>
                       <span className="text-slate-400 block uppercase font-mono tracking-wider text-3xs mb-0.5">Feed Cost</span>
                       <span className="text-slate-800 font-mono text-xs">Rs {summary.feedCost.toLocaleString()}</span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block uppercase font-mono tracking-wider text-3xs mb-0.5">Egg Revenue</span>
-                      <span className="text-emerald-700 font-mono text-xs font-bold">Rs {summary.eggIncome.toLocaleString()}</span>
+                      <span className="text-slate-400 block uppercase font-mono tracking-wider text-3xs mb-0.5">Other Expenses</span>
+                      <span className="text-slate-800 font-mono text-xs">Rs {summary.otherExpenses.toLocaleString()}</span>
                     </div>
                     <div>
                       <span className="text-slate-400 block uppercase font-mono tracking-wider text-3xs mb-0.5">Total Expense</span>
@@ -183,7 +190,9 @@ export default function MonthlySummary({
                     <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold font-mono uppercase text-3xs tracking-wider">
                       <th className="p-3">Statement Month</th>
                       <th className="p-3 text-center">Eggs Collected</th>
+                      <th className="p-3 text-right">Bird Purchase (Rs)</th>
                       <th className="p-3 text-right">Feed Cost (Rs)</th>
+                      <th className="p-3 text-right">Other Expenses (Rs)</th>
                       <th className="p-3 text-right">Total Expenses (Rs)</th>
                       <th className="p-3 text-right">Egg Commercial Income (Rs)</th>
                       <th className="p-3 text-right">Net Balance Sheet</th>
@@ -194,7 +203,9 @@ export default function MonthlySummary({
                       <tr key={item.month} className="hover:bg-slate-50/50">
                         <td className="p-3 font-bold text-slate-800 font-display">{formatMonthName(item.month)}</td>
                         <td className="p-3 text-center font-mono font-bold text-slate-900">{item.eggsCollected}</td>
+                        <td className="p-3 text-right font-mono text-indigo-800">Rs {item.birdPurchase.toLocaleString()}</td>
                         <td className="p-3 text-right font-mono text-amber-800">Rs {item.feedCost.toLocaleString()}</td>
+                        <td className="p-3 text-right font-mono text-slate-700">Rs {item.otherExpenses.toLocaleString()}</td>
                         <td className="p-3 text-right font-mono text-rose-800">Rs {item.totalExpense.toLocaleString()}</td>
                         <td className="p-3 text-right font-mono text-emerald-800">Rs {item.eggIncome.toLocaleString()}</td>
                         <td className="p-3 text-right font-mono font-bold">
