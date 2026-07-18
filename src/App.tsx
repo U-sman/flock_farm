@@ -21,6 +21,13 @@ import {
   INITIAL_EGG_PRODUCTION 
 } from './initialData';
 
+import {
+  IMPORTED_BIRDS,
+  IMPORTED_EXPENSES,
+  IMPORTED_FEED_RECORDS,
+  IMPORTED_EGG_PRODUCTION
+} from './importedFarmData';
+
 import { 
   Bird, 
   OtherExpense, 
@@ -118,6 +125,17 @@ export default function App() {
       defaultPricePerEgg: 25,
       vaccinationIntervalDays: 30
     });
+  };
+
+  // Imports the real farm records extracted from the uploaded Excel file.
+  // This REPLACES current birds/expenses/feed data with the real records
+  // (does not touch egg production, since none were logged in that file).
+  const handleImportRealFarmData = () => {
+    setBirds(IMPORTED_BIRDS);
+    setOtherExpenses(IMPORTED_EXPENSES);
+    setFeedRecords(IMPORTED_FEED_RECORDS);
+    // Egg sheet in the Excel file had no logged entries, so we leave
+    // whatever egg records already exist untouched rather than wiping them.
   };
 
   // --- FLOCK WORKFLOW HANDLERS ---
@@ -344,6 +362,7 @@ export default function App() {
               onSaveSettings={setSettings}
               onResetDatabase={handleResetDatabase}
               onClearDatabase={handleClearDatabase}
+              onImportRealFarmData={handleImportRealFarmData}
             />
           )}
         </main>

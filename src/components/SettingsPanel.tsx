@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings, Save, RotateCcw, AlertTriangle, ShieldCheck, Check } from 'lucide-react';
+import { Settings, Save, RotateCcw, AlertTriangle, ShieldCheck, Check, Upload } from 'lucide-react';
 import { GlobalSettings } from '../types';
 
 interface SettingsPanelProps {
@@ -7,13 +7,15 @@ interface SettingsPanelProps {
   onSaveSettings: (settings: GlobalSettings) => void;
   onResetDatabase: () => void;
   onClearDatabase: () => void;
+  onImportRealFarmData: () => void;
 }
 
 export default function SettingsPanel({
   settings,
   onSaveSettings,
   onResetDatabase,
-  onClearDatabase
+  onClearDatabase,
+  onImportRealFarmData
 }: SettingsPanelProps) {
   const [eggPrice, setEggPrice] = useState(settings.defaultPricePerEgg.toString());
   const [vacInterval, setVacInterval] = useState(settings.vaccinationIntervalDays.toString());
@@ -110,6 +112,31 @@ export default function SettingsPanel({
               <span>Save Configuration</span>
             </button>
           </form>
+        </div>
+
+        {/* One-time import of real farm records from Excel */}
+        <div className="bg-white p-6 rounded-2xl border border-emerald-200 shadow-xs space-y-4 md:col-span-2">
+          <h3 className="font-bold text-sm text-slate-800 font-display flex items-center gap-2 border-b border-slate-100 pb-3">
+            <Upload className="w-5 h-5 text-emerald-600" /> Import Real Farm Records
+          </h3>
+          <p className="text-3xs text-slate-500">
+            Loads your real records (21 birds, 6 expenses, 5 feed purchases) from your uploaded Excel file.
+            This <strong>replaces</strong> your current Birds, Financial Ledger, and Feed records with the real data —
+            your egg log is left untouched since no egg entries existed in that file.
+          </p>
+          <button
+            onClick={() => {
+              if (confirm('Import your real farm records from Excel? This will replace current Birds, Expenses, and Feed records with the real data. This cannot be undone.')) {
+                onImportRealFarmData();
+                alert('Your real farm records have been imported successfully!');
+              }
+            }}
+            className="w-full sm:w-auto py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl transition cursor-pointer flex items-center justify-center gap-2 shadow-2xs"
+            id="btn-import-real-farm-data"
+          >
+            <Upload className="w-4 h-4" />
+            <span>Import My Excel Farm Data</span>
+          </button>
         </div>
 
         {/* Database administration panel */}
