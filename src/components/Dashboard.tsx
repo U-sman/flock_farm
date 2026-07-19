@@ -254,9 +254,9 @@ export default function Dashboard({
               <Coins className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div className="min-w-0">
-              <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider truncate">Total Income</p>
+              <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider leading-tight">Total Income</p>
               <h4 className="text-sm sm:text-xl font-bold font-mono text-slate-800 mt-0.5 truncate">Rs {totalIncome.toLocaleString()}</h4>
-              <p className="text-4xs sm:text-3xs text-slate-400 mt-0.5 truncate">Egg Sales Earnings</p>
+              <p className="text-4xs sm:text-3xs text-slate-400 mt-0.5 leading-tight">Egg Sales Earnings</p>
             </div>
           </div>
 
@@ -266,9 +266,9 @@ export default function Dashboard({
               <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div className="min-w-0">
-              <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider truncate">Total Expenses</p>
+              <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider leading-tight">Total Expenses</p>
               <h4 className="text-sm sm:text-xl font-bold font-mono text-slate-800 mt-0.5 truncate">Rs {totalExpense.toLocaleString()}</h4>
-              <p className="text-4xs sm:text-3xs text-slate-400 mt-0.5 truncate">Birds + Feed + Ops</p>
+              <p className="text-4xs sm:text-3xs text-slate-400 mt-0.5 leading-tight">Birds + Feed + Ops</p>
             </div>
           </div>
 
@@ -282,11 +282,11 @@ export default function Dashboard({
               {netProfitLoss >= 0 ? <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" /> : <TrendingDown className="w-5 h-5 sm:w-6 sm:h-6" />}
             </div>
             <div className="min-w-0">
-              <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider truncate">Net Profit/Loss</p>
+              <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider leading-tight">Net Profit/Loss</p>
               <h4 className={`text-sm sm:text-xl font-bold font-mono mt-0.5 truncate ${netProfitLoss >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                 {netProfitLoss >= 0 ? '+' : ''}Rs {netProfitLoss.toLocaleString()}
               </h4>
-              <p className="text-4xs sm:text-3xs text-slate-400 mt-0.5 truncate">Ledger Balance</p>
+              <p className="text-4xs sm:text-3xs text-slate-400 mt-0.5 leading-tight">Ledger Balance</p>
             </div>
           </div>
 
@@ -297,11 +297,11 @@ export default function Dashboard({
                 <Percent className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div className="min-w-0">
-                <p className="text-2xs sm:text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider truncate">ROI %</p>
+                <p className="text-2xs sm:text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider leading-tight">ROI %</p>
                 <h4 className={`text-sm sm:text-xl font-bold font-mono mt-0.5 truncate ${roiPercent >= 0 ? 'text-violet-600 dark:text-violet-400' : 'text-rose-600 dark:text-rose-400'}`}>
                   {roiPercent.toFixed(1)}%
                 </h4>
-                <p className="text-4xs sm:text-3xs text-slate-400 dark:text-slate-500 mt-0.5 truncate font-medium italic">High Gain Ratio</p>
+                <p className="text-4xs sm:text-3xs text-slate-400 dark:text-slate-500 mt-0.5 leading-tight font-medium italic">High Gain Ratio</p>
               </div>
             </div>
           )}
@@ -334,7 +334,7 @@ export default function Dashboard({
               <Activity className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div className="min-w-0">
-              <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider truncate">Active Birds</p>
+              <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider leading-tight">Active Birds</p>
               <h4 className="text-sm sm:text-xl font-bold font-mono text-slate-800 mt-0.5 truncate">
                 {activeBirdsCount} <span className="text-[10px] sm:text-xs text-slate-400 font-normal">/{totalBirdsCount}</span>
               </h4>
@@ -354,11 +354,11 @@ export default function Dashboard({
               <HeartPulse className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div className="min-w-0">
-              <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider truncate">Mortality</p>
+              <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider leading-tight">Mortality</p>
               <h4 className={`text-sm sm:text-xl font-bold font-mono mt-0.5 truncate ${showHighMortality ? 'text-red-600' : 'text-slate-800'}`}>
                 {mortalityRatePercent.toFixed(1)}%
               </h4>
-              <p className="text-4xs sm:text-3xs text-slate-400 mt-0.5 truncate">{deadBirdsCount} deceased birds</p>
+              <p className="text-4xs sm:text-3xs text-slate-400 mt-0.5 leading-tight">{deadBirdsCount} deceased</p>
             </div>
           </div>
 
@@ -369,9 +369,9 @@ export default function Dashboard({
                 <Egg className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div className="min-w-0">
-                <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider truncate">Avg Eggs/Hen</p>
+                <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider leading-tight">Avg Eggs/Hen</p>
                 <h4 className="text-sm sm:text-xl font-bold font-mono text-slate-800 mt-0.5 truncate">{avgEggsPerHenPerDay.toFixed(2)}</h4>
-                <p className="text-4xs sm:text-3xs text-slate-400 mt-0.5 truncate">{activeFemaleBirdsCount} hens laying</p>
+                <p className="text-4xs sm:text-3xs text-slate-400 mt-0.5 leading-tight">{activeFemaleBirdsCount} hens laying</p>
               </div>
             </div>
           )}
@@ -383,9 +383,9 @@ export default function Dashboard({
                 <Egg className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div className="min-w-0">
-                <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider truncate">Total Eggs</p>
+                <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider leading-tight">Total Eggs</p>
                 <h4 className="text-sm sm:text-xl font-bold font-mono text-slate-800 mt-0.5 truncate">{totalEggsCollected}</h4>
-                <p className="text-4xs sm:text-3xs text-slate-400 mt-0.5 truncate">{uniqueDaysCount} logging days</p>
+                <p className="text-4xs sm:text-3xs text-slate-400 mt-0.5 leading-tight">{uniqueDaysCount} logging days</p>
               </div>
             </div>
           )}
@@ -397,9 +397,9 @@ export default function Dashboard({
                 <Coins className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div className="min-w-0">
-                <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider truncate">Cost per Egg</p>
+                <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider leading-tight">Cost/Egg</p>
                 <h4 className="text-sm sm:text-xl font-bold font-mono text-slate-800 mt-0.5 truncate">Rs {costPerEggValue.toFixed(2)}</h4>
-                <p className="text-4xs sm:text-3xs text-slate-400 mt-0.5 truncate">Total expense ÷ eggs collected</p>
+                <p className="text-4xs sm:text-3xs text-slate-400 mt-0.5 leading-tight">Cost/egg</p>
               </div>
             </div>
           )}
@@ -411,9 +411,9 @@ export default function Dashboard({
                 <DollarSign className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div className="min-w-0">
-                <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider truncate">Cost per Bird</p>
+                <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider leading-tight">Cost/Bird</p>
                 <h4 className="text-sm sm:text-xl font-bold font-mono text-slate-800 mt-0.5 truncate">Rs {costPerBirdValue.toFixed(0)}</h4>
-                <p className="text-4xs sm:text-3xs text-slate-400 mt-0.5 truncate">Total expense ÷ active birds</p>
+                <p className="text-4xs sm:text-3xs text-slate-400 mt-0.5 leading-tight">Cost/bird</p>
               </div>
             </div>
           )}
