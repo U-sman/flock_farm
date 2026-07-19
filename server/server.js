@@ -18,7 +18,11 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json({ limit: '5mb' }));
 
-const ALLOWED_KEYS = ['birds', 'expenses', 'feed', 'eggs', 'settings'];
+const ALLOWED_KEYS = [
+  'birds', 'expenses', 'feed', 'eggs', 'settings',
+  'batches', 'vaccinations', 'customers', 'customerSales',
+  'incubation', 'checklist', 'diary',
+];
 
 // GET /api/data/:key -> returns the stored value (or null if not set yet)
 app.get('/api/data/:key', async (req, res) => {

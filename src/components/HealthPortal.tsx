@@ -9,20 +9,33 @@ import {
   XCircle, 
   HelpCircle,
   Clock,
-  Check
+  Check,
+  Plus,
+  Trash2,
+  History
 } from 'lucide-react';
-import { Bird, DeathReason } from '../types';
+import { Bird, DeathReason, VaccinationRecord, Lang } from '../types';
 
 interface HealthPortalProps {
   birds: Bird[];
+  vaccinations: VaccinationRecord[];
   vaccinationIntervalDays: number;
   onUpdateBird: (id: number, bird: Bird) => void;
+  onAddVaccination: (v: Omit<VaccinationRecord, 'id'>) => void;
+  onDeleteVaccination: (id: number) => void;
+  canDelete?: boolean;
+  isAdmin?: boolean;
+  lang?: Lang;
 }
 
 export default function HealthPortal({
   birds,
+  vaccinations,
   vaccinationIntervalDays,
-  onUpdateBird
+  onUpdateBird,
+  onAddVaccination,
+  onDeleteVaccination,
+  canDelete = true,
 }: HealthPortalProps) {
   // --- B. MORTALITY ENGINE ---
   const deadBirds = birds.filter(b => b.status === 'Dead');
@@ -99,12 +112,57 @@ export default function HealthPortal({
     else if (info.status === 'OK') vacMetrics.ok++;
   });
 
-  // Action: Mark vaccinated today
+  // --- D. VACCINATION HISTORY LOG ---
+  const [logBirdId, setLogBirdId] = useState<string>('');
+  const [logDate, setLogDate] = useState(new Date().toISOString().split('T')[0]);
+  const [logVaccineName, setLogVaccineName] = useState('');
+  const [logDose, setLogDose] = useState('');
+  const [logCost, setLogCost] = useState('');
+  const [logNotes, setLogNotes] = useState('');
+
+  const sortedVaccinations = [...vaccinations].sort((a, b) => b.date.localeCompare(a.date));
+
+  const getBirdName = (birdId: number) => birds.find(b => b.id === birdId)?.name || `Bird #${birdId}`;
+
+  const handleLogVaccinationSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!logBirdId) return alert('Please select a bird');
+    if (!logVaccineName.trim()) return alert('Please enter the vaccine name');
+
+    const birdId = parseInt(logBirdId);
+    onAddVaccination({
+      birdId,
+      date: logDate,
+      vaccineName: logVaccineName.trim(),
+      dose: logDose.trim() || undefined,
+      cost: logCost ? parseFloat(logCost) : undefined,
+      notes: logNotes.trim() || undefined,
+    });
+
+    // Keep the bird's "last vaccination date" quick-glance field in sync
+    const bird = birds.find(b => b.id === birdId);
+    if (bird && (!bird.lastVaccinationDate || logDate >= bird.lastVaccinationDate)) {
+      onUpdateBird(birdId, { ...bird, lastVaccinationDate: logDate });
+    }
+
+    setLogVaccineName('');
+    setLogDose('');
+    setLogCost('');
+    setLogNotes('');
+  };
+
+  // Action: Mark vaccinated today (quick action) — also logs a history entry
   const handleMarkVaccinated = (bird: Bird) => {
     const todayStr = new Date().toISOString().split('T')[0];
     onUpdateBird(bird.id, {
       ...bird,
       lastVaccinationDate: todayStr
+    });
+    onAddVaccination({
+      birdId: bird.id,
+      date: todayStr,
+      vaccineName: 'General',
+      notes: 'Logged via quick "Vaccine Today" action',
     });
   };
 
@@ -264,6 +322,131 @@ export default function HealthPortal({
                       <div className="mt-2 text-3xs text-slate-600 bg-white border border-rose-100 p-2 rounded-lg italic">
                         "{bird.deathDetail}"
                       </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* VACCINATION HISTORY LOG */}
+      <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-xs space-y-5">
+        <h3 className="font-bold text-sm text-slate-800 font-display flex items-center gap-2 border-b border-slate-100 pb-3">
+          <History className="w-5 h-5 text-indigo-600" /> Vaccination History Log
+        </h3>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Add vaccination record form */}
+          <form onSubmit={handleLogVaccinationSubmit} className="space-y-3 lg:col-span-1">
+            <div>
+              <label className="block text-2xs font-bold text-slate-500 uppercase tracking-wider mb-1">Bird *</label>
+              <select
+                value={logBirdId}
+                onChange={(e) => setLogBirdId(e.target.value)}
+                className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl focus:border-indigo-400 focus:outline-hidden"
+                id="vaccination-log-bird-select"
+              >
+                <option value="">Select a bird...</option>
+                {birds.map(b => (
+                  <option key={b.id} value={b.id}>{b.name} ({b.status})</option>
+                ))}
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-2xs font-bold text-slate-500 uppercase tracking-wider mb-1">Date *</label>
+                <input
+                  type="date"
+                  value={logDate}
+                  onChange={(e) => setLogDate(e.target.value)}
+                  className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl focus:border-indigo-400 focus:outline-hidden"
+                />
+              </div>
+              <div>
+                <label className="block text-2xs font-bold text-slate-500 uppercase tracking-wider mb-1">Cost (Rs)</label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="Optional"
+                  value={logCost}
+                  onChange={(e) => setLogCost(e.target.value)}
+                  className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl focus:border-indigo-400 focus:outline-hidden"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-2xs font-bold text-slate-500 uppercase tracking-wider mb-1">Vaccine Name *</label>
+              <input
+                type="text"
+                placeholder="e.g. Newcastle Disease"
+                value={logVaccineName}
+                onChange={(e) => setLogVaccineName(e.target.value)}
+                className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl focus:border-indigo-400 focus:outline-hidden"
+              />
+            </div>
+            <div>
+              <label className="block text-2xs font-bold text-slate-500 uppercase tracking-wider mb-1">Dose</label>
+              <input
+                type="text"
+                placeholder="e.g. 0.5ml"
+                value={logDose}
+                onChange={(e) => setLogDose(e.target.value)}
+                className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl focus:border-indigo-400 focus:outline-hidden"
+              />
+            </div>
+            <div>
+              <label className="block text-2xs font-bold text-slate-500 uppercase tracking-wider mb-1">Notes</label>
+              <textarea
+                placeholder="Optional notes"
+                value={logNotes}
+                onChange={(e) => setLogNotes(e.target.value)}
+                rows={2}
+                className="w-full text-xs px-3 py-2 border border-slate-200 rounded-xl focus:border-indigo-400 focus:outline-hidden resize-none"
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl transition cursor-pointer flex items-center justify-center gap-2"
+              id="btn-log-vaccination"
+            >
+              <Plus className="w-4 h-4" /> Log Vaccination Record
+            </button>
+          </form>
+
+          {/* History list */}
+          <div className="lg:col-span-2 space-y-2">
+            <h4 className="text-xs font-semibold text-slate-400 font-mono uppercase tracking-wider">
+              Full History ({sortedVaccinations.length} records)
+            </h4>
+            <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden max-h-96 overflow-y-auto">
+              {sortedVaccinations.length === 0 ? (
+                <p className="p-6 text-center text-xs text-slate-400 italic bg-slate-50/50">No vaccination records logged yet.</p>
+              ) : (
+                sortedVaccinations.map(v => (
+                  <div key={v.id} className="flex items-center justify-between gap-2 p-3 text-xs bg-white hover:bg-slate-50/50">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-slate-800">{getBirdName(v.birdId)}</span>
+                        <span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded text-3xs font-semibold">
+                          {v.vaccineName}
+                        </span>
+                        {v.dose && <span className="text-3xs text-slate-400">Dose: {v.dose}</span>}
+                      </div>
+                      <p className="text-3xs text-slate-500 font-mono mt-0.5">
+                        {v.date}{v.cost ? ` — Rs ${v.cost.toLocaleString()}` : ''}
+                        {v.notes ? ` — "${v.notes}"` : ''}
+                      </p>
+                    </div>
+                    {canDelete && (
+                      <button
+                        onClick={() => { if (confirm('Delete this vaccination record?')) onDeleteVaccination(v.id); }}
+                        className="text-gray-400 hover:text-red-600 transition p-1 shrink-0"
+                        title="Delete record"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     )}
                   </div>
                 ))

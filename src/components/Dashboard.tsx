@@ -16,10 +16,18 @@ import {
   ChevronUp,
   Syringe,
   Package,
-  CalendarClock
+  CalendarClock,
+  MessageCircle,
+  Mail
 } from 'lucide-react';
-import { Bird, OtherExpense, FeedRecord, EggProduction, GlobalSettings } from '../types';
+import { Bird, OtherExpense, FeedRecord, EggProduction, GlobalSettings, DateRange, Lang } from '../types';
 import { motion } from 'motion/react';
+import { 
+  costPerEgg, costPerBird, birdSaleIncome, totalIncome as calcTotalIncome, 
+  totalExpense as calcTotalExpense, inDateRange 
+} from '../utils/calculations';
+import { LightBarChart, DateRangeFilter } from './LightChart';
+import { shareViaWhatsApp, shareViaEmail } from '../utils/share';
 
 interface DashboardProps {
   birds: Bird[];
@@ -29,6 +37,13 @@ interface DashboardProps {
   settings: GlobalSettings;
   openQuickAction: (actionType: 'bird' | 'egg' | 'expense' | 'feed') => void;
   onNavigate: (tab: string) => void;
+  lang?: Lang;
+  dateRange?: DateRange | null;
+  rangeFrom?: string;
+  rangeTo?: string;
+  onDateRangeChange?: (from: string, to: string) => void;
+  onDatePreset?: (preset: 'all' | 'month' | '30d') => void;
+  isAdmin?: boolean;
 }
 
 export default function Dashboard({
@@ -38,30 +53,51 @@ export default function Dashboard({
   eggProduction,
   settings,
   openQuickAction,
-  onNavigate
+  onNavigate,
+  lang = 'en',
+  dateRange = null,
+  rangeFrom = '',
+  rangeTo = '',
+  onDateRangeChange,
+  onDatePreset,
 }: DashboardProps) {
   // --- 3. LIVE KPI DASHBOARD CALCULATIONS ---
-  
-  // Total Purchase Cost of Birds (Rs)
-  const totalBirdPurchaseCost = birds.reduce((sum, bird) => sum + (bird.price || 0), 0);
+  // All financial figures respect the selected date range (from the filter above);
+  // bird headcounts (active/dead/sold) always reflect current flock state.
+
+  const rangedFeedRecords = feedRecords.filter(f => inDateRange(f.date, dateRange));
+  const rangedOtherExpenses = otherExpenses.filter(o => inDateRange(o.date, dateRange));
+  const rangedEggProduction = eggProduction.filter(e => inDateRange(e.date, dateRange));
+
+  // Total Purchase Cost of Birds (Rs) — within range
+  const totalBirdPurchaseCost = birds
+    .filter(b => inDateRange(b.dateBought, dateRange))
+    .reduce((sum, bird) => sum + (bird.price || 0), 0);
 
   // Total Feed Cost (Rs)
-  const totalFeedCost = feedRecords.reduce((sum, feed) => sum + (feed.quantityKg * feed.rateRsPerKg), 0);
+  const totalFeedCost = rangedFeedRecords.reduce((sum, feed) => sum + (feed.quantityKg * feed.rateRsPerKg), 0);
 
   // Total Other Expenses (Rs)
-  const totalOtherExpenses = otherExpenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
+  const totalOtherExpenses = rangedOtherExpenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
 
   // Total Expense (Rs)
   const totalExpense = totalBirdPurchaseCost + totalFeedCost + totalOtherExpenses;
 
-  // Total Income (Rs) (Sold * Default Price Per Egg)
-  const totalIncome = eggProduction.reduce((sum, record) => sum + (record.sold * settings.defaultPricePerEgg), 0);
+
+  // Total Income (Rs) — egg sales + income from any birds sold, within range
+  const eggIncome = rangedEggProduction.reduce((sum, record) => sum + (record.sold * settings.defaultPricePerEgg), 0);
+  const birdIncome = birdSaleIncome(birds, dateRange);
+  const totalIncome = eggIncome + birdIncome;
 
   // Net Profit / Loss (Rs)
   const netProfitLoss = totalIncome - totalExpense;
 
   // ROI %
   const roiPercent = totalExpense > 0 ? (netProfitLoss / totalExpense) * 100 : 0;
+
+  // Cost efficiency metrics (respect date range too)
+  const costPerEggValue = costPerEgg(birds, feedRecords, otherExpenses, eggProduction, dateRange);
+  const costPerBirdValue = costPerBird(birds, feedRecords, otherExpenses, dateRange);
 
   // Birds Count
   const totalBirdsCount = birds.length;
@@ -76,8 +112,8 @@ export default function Dashboard({
   const activeFemaleBirdsCount = birds.filter(b => b.status === 'Active' && b.gender === 'Female').length;
   
   // Count of unique days in egg production record
-  const uniqueDaysCount = eggProduction.length;
-  const totalEggsCollected = eggProduction.reduce((sum, ep) => sum + ep.totalEggsCollected, 0);
+  const uniqueDaysCount = rangedEggProduction.length;
+  const totalEggsCollected = rangedEggProduction.reduce((sum, ep) => sum + ep.totalEggsCollected, 0);
 
   // Average Eggs/Hen/Day
   const avgEggsPerHenPerDay = (activeFemaleBirdsCount > 0 && uniqueDaysCount > 0)
@@ -125,8 +161,39 @@ export default function Dashboard({
 
   const hasReminders = vaccinationReminders.length > 0 || feedRestockReminders.length > 0;
 
+  // --- Daily Summary text (for WhatsApp / Email share) ---
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayEgg = eggProduction.find(e => e.date === todayStr);
+  const todayExpenseTotal = 
+    feedRecords.filter(f => f.date === todayStr).reduce((s, f) => s + f.quantityKg * f.rateRsPerKg, 0) +
+    otherExpenses.filter(o => o.date === todayStr).reduce((s, o) => s + o.amount, 0);
+  const todayEggIncome = todayEgg ? todayEgg.sold * settings.defaultPricePerEgg : 0;
+
+  const dailySummaryText = 
+    `🐔 Flock Farm — Daily Summary (${todayStr})\n\n` +
+    `Active Birds: ${activeBirdsCount}\n` +
+    `Eggs Collected Today: ${todayEgg?.totalEggsCollected ?? 0}\n` +
+    `Eggs Sold Today: ${todayEgg?.sold ?? 0} (Rs ${todayEggIncome.toLocaleString()})\n` +
+    `Today's Expenses: Rs ${todayExpenseTotal.toLocaleString()}\n` +
+    `Mortality Rate: ${mortalityRatePercent.toFixed(1)}%\n\n` +
+    `Overall Net Profit/Loss: Rs ${netProfitLoss.toLocaleString()}`;
+
+
   return (
     <div className="space-y-8" id="dashboard-tab">
+      {/* Date Range Filter — applies to all financial/egg KPIs below */}
+      {onDatePreset && onDateRangeChange && (
+        <div className="flex justify-end">
+          <DateRangeFilter
+            lang={lang}
+            from={rangeFrom}
+            to={rangeTo}
+            onChange={onDateRangeChange}
+            onPreset={onDatePreset}
+          />
+        </div>
+      )}
+
       {/* Smart Alerts Engine */}
       {(showHighMortality || showFinancialDeficit) && (
         <div className="space-y-3">
@@ -322,6 +389,34 @@ export default function Dashboard({
               </div>
             </div>
           )}
+
+          {/* Cost per Egg (secondary metric) */}
+          {showMore && (
+            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 sm:gap-4 hover:border-slate-300 hover:shadow-sm transition duration-150 animate-in fade-in zoom-in-95 duration-150" id="kpi-cost-per-egg">
+              <div className="p-2 sm:p-3 bg-orange-50 text-orange-600 rounded-xl shrink-0">
+                <Coins className="w-5 h-5 sm:w-6 sm:h-6" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider truncate">Cost per Egg</p>
+                <h4 className="text-sm sm:text-xl font-bold font-mono text-slate-800 mt-0.5 truncate">Rs {costPerEggValue.toFixed(2)}</h4>
+                <p className="text-4xs sm:text-3xs text-slate-400 mt-0.5 truncate">Total expense ÷ eggs collected</p>
+              </div>
+            </div>
+          )}
+
+          {/* Cost per Bird (secondary metric) */}
+          {showMore && (
+            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 sm:gap-4 hover:border-slate-300 hover:shadow-sm transition duration-150 animate-in fade-in zoom-in-95 duration-150" id="kpi-cost-per-bird">
+              <div className="p-2 sm:p-3 bg-fuchsia-50 text-fuchsia-600 rounded-xl shrink-0">
+                <DollarSign className="w-5 h-5 sm:w-6 sm:h-6" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider truncate">Cost per Bird</p>
+                <h4 className="text-sm sm:text-xl font-bold font-mono text-slate-800 mt-0.5 truncate">Rs {costPerBirdValue.toFixed(0)}</h4>
+                <p className="text-4xs sm:text-3xs text-slate-400 mt-0.5 truncate">Total expense ÷ active birds</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -376,6 +471,58 @@ export default function Dashboard({
           </div>
         </div>
       )}
+
+      {/* Share Daily Summary */}
+      <div className="flex flex-wrap items-center gap-2.5 bg-slate-50 border border-slate-200 rounded-2xl p-4">
+        <span className="text-xs font-semibold text-slate-600 mr-1">Share Today's Summary:</span>
+        <button
+          onClick={() => shareViaWhatsApp(dailySummaryText)}
+          className="flex items-center gap-2 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-full transition cursor-pointer"
+          id="btn-share-whatsapp"
+        >
+          <MessageCircle className="w-3.5 h-3.5" />
+          <span>WhatsApp</span>
+        </button>
+        <button
+          onClick={() => shareViaEmail('Flock Farm — Daily Summary', dailySummaryText)}
+          className="flex items-center gap-2 px-3.5 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-semibold text-xs rounded-full transition cursor-pointer"
+          id="btn-share-email"
+        >
+          <Mail className="w-3.5 h-3.5" />
+          <span>Email</span>
+        </button>
+      </div>
+
+      {/* Lightweight Charts */}
+      <div className="space-y-4">
+        <h3 className="text-xs font-bold tracking-wider uppercase text-slate-400 font-mono">
+          Trends
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs">
+            <LightBarChart
+              title="Eggs Collected (selected range, per log)"
+              data={[...rangedEggProduction]
+                .sort((a, b) => a.date.localeCompare(b.date))
+                .slice(-10)
+                .map(e => ({ label: e.date.slice(5), value: e.totalEggsCollected }))}
+              color="#d97706"
+            />
+          </div>
+          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs">
+            <LightBarChart
+              title="Expense Breakdown (selected range)"
+              data={[
+                { label: 'Birds', value: totalBirdPurchaseCost },
+                { label: 'Feed', value: totalFeedCost },
+                { label: 'Other', value: totalOtherExpenses },
+              ]}
+              color="#e11d48"
+              formatValue={(v) => `Rs ${v.toLocaleString()}`}
+            />
+          </div>
+        </div>
+      </div>
 
       {/* Quick Action Trigger Panel */}
       <div className="bg-green-900 rounded-2xl p-6 relative overflow-hidden shadow-xs">

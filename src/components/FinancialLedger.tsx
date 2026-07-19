@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   Plus, 
   Trash2, 
+  Pencil,
+  X,
   Calendar, 
   Egg, 
   ShoppingBag, 
@@ -21,10 +23,13 @@ interface FinancialLedgerProps {
   eggProduction: EggProduction[];
   settings: GlobalSettings;
   onAddFeedRecord: (record: Omit<FeedRecord, 'id'>) => void;
+  onUpdateFeedRecord: (id: number, record: FeedRecord) => void;
   onDeleteFeedRecord: (id: number) => void;
   onAddOtherExpense: (expense: Omit<OtherExpense, 'id'>) => void;
+  onUpdateOtherExpense: (id: number, expense: OtherExpense) => void;
   onDeleteOtherExpense: (id: number) => void;
   onAddEggRecord: (record: EggProduction) => void;
+  onUpdateEggRecord: (date: string, record: EggProduction) => void;
   onDeleteEggRecord: (date: string) => void;
   quickOpenTab: 'feed' | 'expense' | 'egg' | null;
   onResetQuickOpenTab: () => void;
@@ -36,10 +41,13 @@ export default function FinancialLedger({
   eggProduction,
   settings,
   onAddFeedRecord,
+  onUpdateFeedRecord,
   onDeleteFeedRecord,
   onAddOtherExpense,
+  onUpdateOtherExpense,
   onDeleteOtherExpense,
   onAddEggRecord,
+  onUpdateEggRecord,
   onDeleteEggRecord,
   quickOpenTab,
   onResetQuickOpenTab
@@ -83,6 +91,57 @@ export default function FinancialLedger({
   const [expenseSearch, setExpenseSearch] = useState('');
   const [eggSearch, setEggSearch] = useState('');
 
+  // Which record (if any) is currently being edited in each form
+  const [editingFeedId, setEditingFeedId] = useState<number | null>(null);
+  const [editingExpenseId, setEditingExpenseId] = useState<number | null>(null);
+  const [editingEggDate, setEditingEggDate] = useState<string | null>(null);
+
+  const startEditFeed = (record: FeedRecord) => {
+    setEditingFeedId(record.id);
+    setFeedDate(record.date);
+    setFeedType(record.feedType);
+    setFeedQty(String(record.quantityKg));
+    setFeedRate(String(record.rateRsPerKg));
+    setFeedNotes(record.notes || '');
+  };
+  const cancelEditFeed = () => {
+    setEditingFeedId(null);
+    setFeedQty('');
+    setFeedRate('');
+    setFeedNotes('');
+  };
+
+  const startEditExpense = (record: OtherExpense) => {
+    setEditingExpenseId(record.id);
+    setExpDate(record.date);
+    setExpDetail(record.detail);
+    setExpCategory(record.category);
+    setExpAmount(String(record.amount));
+    setExpNotes(record.notes || '');
+  };
+  const cancelEditExpense = () => {
+    setEditingExpenseId(null);
+    setExpDetail('');
+    setExpAmount('');
+    setExpNotes('');
+  };
+
+  const startEditEgg = (record: EggProduction) => {
+    setEditingEggDate(record.date);
+    setEggDate(record.date);
+    setEggsCollected(String(record.totalEggsCollected));
+    setEggsSold(String(record.sold));
+    setEggsHomeUse(String(record.homeUse));
+    setEggsBroken(String(record.brokenWasted));
+  };
+  const cancelEditEgg = () => {
+    setEditingEggDate(null);
+    setEggsCollected('');
+    setEggsSold('');
+    setEggsHomeUse('');
+    setEggsBroken('');
+  };
+
   // Submit Feed Record
   const handleFeedSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,13 +150,19 @@ export default function FinancialLedger({
     if (!qty || qty <= 0 || !rate || rate <= 0) {
       return alert('Please enter valid quantity and rate');
     }
-    onAddFeedRecord({
+    const payload = {
       date: feedDate,
       feedType,
       quantityKg: qty,
       rateRsPerKg: rate,
       notes: feedNotes.trim() || undefined
-    });
+    };
+    if (editingFeedId !== null) {
+      onUpdateFeedRecord(editingFeedId, { ...payload, id: editingFeedId });
+      setEditingFeedId(null);
+    } else {
+      onAddFeedRecord(payload);
+    }
     // Reset Form
     setFeedQty('');
     setFeedRate('');
@@ -111,13 +176,19 @@ export default function FinancialLedger({
     if (!expDetail.trim()) return alert('Please enter expense detail');
     if (!amt || amt <= 0) return alert('Please enter a valid amount');
 
-    onAddOtherExpense({
+    const payload = {
       date: expDate,
       detail: expDetail.trim(),
       category: expCategory,
       amount: amt,
       notes: expNotes.trim() || undefined
-    });
+    };
+    if (editingExpenseId !== null) {
+      onUpdateOtherExpense(editingExpenseId, { ...payload, id: editingExpenseId });
+      setEditingExpenseId(null);
+    } else {
+      onAddOtherExpense(payload);
+    }
     // Reset Form
     setExpDetail('');
     setExpAmount('');
@@ -140,21 +211,27 @@ export default function FinancialLedger({
       return alert(`Sum of Sold (${sold}), Home Use (${home}), and Broken (${brok}) cannot exceed Total Eggs Collected (${col})`);
     }
 
-    // Check if egg record already exists for this date
-    const exists = eggProduction.some(ep => ep.date === eggDate);
-    if (exists) {
-      if (!confirm(`An egg production log already exists for date ${eggDate}. Do you want to update it with these new values?`)) {
-        return;
-      }
-    }
-
-    onAddEggRecord({
+    const payload = {
       date: eggDate,
       totalEggsCollected: col,
       sold,
       homeUse: home,
       brokenWasted: brok
-    });
+    };
+
+    if (editingEggDate !== null) {
+      onUpdateEggRecord(editingEggDate, payload);
+      setEditingEggDate(null);
+    } else {
+      // Check if egg record already exists for this date
+      const exists = eggProduction.some(ep => ep.date === eggDate);
+      if (exists) {
+        if (!confirm(`An egg production log already exists for date ${eggDate}. Do you want to update it with these new values?`)) {
+          return;
+        }
+      }
+      onAddEggRecord(payload);
+    }
 
     // Reset Form
     setEggsCollected('');
@@ -220,7 +297,11 @@ export default function FinancialLedger({
           {/* Data Entry Form */}
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs h-fit space-y-4">
             <h3 className="font-bold text-sm text-slate-800 font-display flex items-center gap-2 border-b border-slate-100 pb-2">
-              <Plus className="w-4 h-4 text-indigo-600" /> Record Feed Purchase
+              {editingFeedId !== null ? (
+                <><Pencil className="w-4 h-4 text-indigo-600" /> Editing Feed Purchase</>
+              ) : (
+                <><Plus className="w-4 h-4 text-indigo-600" /> Record Feed Purchase</>
+              )}
             </h3>
 
             <form onSubmit={handleFeedSubmit} className="space-y-3.5 text-xs text-gray-700">
@@ -300,12 +381,23 @@ export default function FinancialLedger({
                 />
               </div>
 
-              <button 
-                type="submit"
-                className="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs rounded-xl transition cursor-pointer"
-              >
-                Save Feed Purchase
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  type="submit"
+                  className="flex-1 py-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs rounded-xl transition cursor-pointer"
+                >
+                  {editingFeedId !== null ? 'Update Feed Purchase' : 'Save Feed Purchase'}
+                </button>
+                {editingFeedId !== null && (
+                  <button
+                    type="button"
+                    onClick={cancelEditFeed}
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs rounded-xl transition cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
             </form>
           </div>
 
@@ -371,12 +463,22 @@ export default function FinancialLedger({
                             {record.notes || '-'}
                           </td>
                           <td className="p-3 text-right">
-                            <button 
-                              onClick={() => { if (confirm('Delete feed record?')) onDeleteFeedRecord(record.id); }}
-                              className="text-gray-400 hover:text-red-600 transition p-1"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            <div className="flex justify-end gap-1">
+                              <button 
+                                onClick={() => startEditFeed(record)}
+                                className="text-gray-400 hover:text-indigo-600 transition p-1"
+                                title="Edit feed record"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </button>
+                              <button 
+                                onClick={() => { if (confirm('Delete feed record?')) onDeleteFeedRecord(record.id); }}
+                                className="text-gray-400 hover:text-red-600 transition p-1"
+                                title="Delete feed record"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -399,7 +501,11 @@ export default function FinancialLedger({
           {/* Data Entry Form */}
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs h-fit space-y-4">
             <h3 className="font-bold text-sm text-gray-900 font-display flex items-center gap-2">
-              <Plus className="w-4 h-4 text-rose-600" /> Record Other Expense
+              {editingExpenseId !== null ? (
+                <><Pencil className="w-4 h-4 text-rose-600" /> Editing Other Expense</>
+              ) : (
+                <><Plus className="w-4 h-4 text-rose-600" /> Record Other Expense</>
+              )}
             </h3>
 
             <form onSubmit={handleExpenseSubmit} className="space-y-3.5 text-xs text-gray-700">
@@ -464,12 +570,23 @@ export default function FinancialLedger({
                 />
               </div>
 
-              <button 
-                type="submit"
-                className="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs rounded-xl transition cursor-pointer"
-              >
-                Save Expense Record
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  type="submit"
+                  className="flex-1 py-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs rounded-xl transition cursor-pointer"
+                >
+                  {editingExpenseId !== null ? 'Update Expense Record' : 'Save Expense Record'}
+                </button>
+                {editingExpenseId !== null && (
+                  <button
+                    type="button"
+                    onClick={cancelEditExpense}
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs rounded-xl transition cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
             </form>
           </div>
 
@@ -529,12 +646,22 @@ export default function FinancialLedger({
                             {record.notes || '-'}
                           </td>
                           <td className="p-3 text-right">
-                            <button 
-                              onClick={() => { if (confirm('Delete operating expense record?')) onDeleteOtherExpense(record.id); }}
-                              className="text-gray-400 hover:text-red-600 transition p-1"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            <div className="flex justify-end gap-1">
+                              <button 
+                                onClick={() => startEditExpense(record)}
+                                className="text-gray-400 hover:text-indigo-600 transition p-1"
+                                title="Edit expense record"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </button>
+                              <button 
+                                onClick={() => { if (confirm('Delete operating expense record?')) onDeleteOtherExpense(record.id); }}
+                                className="text-gray-400 hover:text-red-600 transition p-1"
+                                title="Delete expense record"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -557,7 +684,11 @@ export default function FinancialLedger({
           {/* Data Entry Form */}
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs h-fit space-y-4">
             <h3 className="font-bold text-sm text-gray-900 font-display flex items-center gap-2">
-              <Plus className="w-4 h-4 text-yellow-600" /> Log Daily Egg Collections
+              {editingEggDate !== null ? (
+                <><Pencil className="w-4 h-4 text-yellow-600" /> Editing Egg Collection ({editingEggDate})</>
+              ) : (
+                <><Plus className="w-4 h-4 text-yellow-600" /> Log Daily Egg Collections</>
+              )}
             </h3>
 
             <form onSubmit={handleEggSubmit} className="space-y-3.5 text-xs text-gray-700">
@@ -639,12 +770,23 @@ export default function FinancialLedger({
                 </div>
               )}
 
-              <button 
-                type="submit"
-                className="w-full py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold text-xs rounded-xl transition cursor-pointer"
-              >
-                Log Egg Production
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  type="submit"
+                  className="flex-1 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold text-xs rounded-xl transition cursor-pointer"
+                >
+                  {editingEggDate !== null ? 'Update Egg Collection' : 'Log Egg Production'}
+                </button>
+                {editingEggDate !== null && (
+                  <button
+                    type="button"
+                    onClick={cancelEditEgg}
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs rounded-xl transition cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
             </form>
           </div>
 
@@ -719,12 +861,22 @@ export default function FinancialLedger({
                               Rs {saleIncome.toLocaleString()}
                             </td>
                             <td className="p-3 text-right">
-                              <button 
-                                onClick={() => { if (confirm('Delete egg collection record?')) onDeleteEggRecord(record.date); }}
-                                className="text-gray-400 hover:text-red-600 transition p-1"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
+                              <div className="flex justify-end gap-1">
+                                <button 
+                                  onClick={() => startEditEgg(record)}
+                                  className="text-gray-400 hover:text-indigo-600 transition p-1"
+                                  title="Edit egg record"
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                </button>
+                                <button 
+                                  onClick={() => { if (confirm('Delete egg collection record?')) onDeleteEggRecord(record.date); }}
+                                  className="text-gray-400 hover:text-red-600 transition p-1"
+                                  title="Delete egg record"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         );

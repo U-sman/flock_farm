@@ -4,7 +4,7 @@ import {
   Egg, 
   ShoppingBag,
 } from 'lucide-react';
-import { Bird, OtherExpense, FeedRecord, EggProduction, GlobalSettings, MonthlySummaryItem } from '../types';
+import { Bird, OtherExpense, FeedRecord, EggProduction, GlobalSettings, MonthlySummaryItem, DateRange, Lang } from '../types';
 
 interface MonthlySummaryProps {
   birds: Bird[];
@@ -12,6 +12,12 @@ interface MonthlySummaryProps {
   feedRecords: FeedRecord[];
   eggProduction: EggProduction[];
   settings: GlobalSettings;
+  lang?: Lang;
+  dateRange?: DateRange | null;
+  rangeFrom?: string;
+  rangeTo?: string;
+  onDateRangeChange?: (from: string, to: string) => void;
+  onDatePreset?: (preset: 'all' | 'month' | '30d') => void;
 }
 
 export default function MonthlySummary({
@@ -19,7 +25,12 @@ export default function MonthlySummary({
   otherExpenses,
   feedRecords,
   eggProduction,
-  settings
+  settings,
+  lang = 'en',
+  rangeFrom = '',
+  rangeTo = '',
+  onDateRangeChange,
+  onDatePreset
 }: MonthlySummaryProps) {
   
   // Calculate aggregated monthly data dynamically

@@ -1,8 +1,11 @@
-import { Bird, OtherExpense, FeedRecord, EggProduction, GlobalSettings } from './types';
+import { Bird, OtherExpense, FeedRecord, EggProduction, GlobalSettings, BirdBatch, VaccinationRecord, Customer, CustomerSale, IncubationRecord } from './types';
 
 export const INITIAL_SETTINGS: GlobalSettings = {
-  defaultPricePerEgg: 25, // Rs 25 per egg
-  vaccinationIntervalDays: 30, // 30 days interval
+  defaultPricePerEgg: 25,
+  vaccinationIntervalDays: 30,
+  feedLowStockDays: 14,
+  feedConsumptionKgPerDay: 2,
+  adminPin: '1234',
 };
 
 export const INITIAL_BIRDS: Bird[] = [
@@ -16,6 +19,8 @@ export const INITIAL_BIRDS: Bird[] = [
     ageBoughtDays: 120,
     lastVaccinationDate: "2026-07-01",
     dateOfBirth: "2025-09-12",
+    breed: "Desi",
+    batchId: 1,
   },
   {
     id: 2,
@@ -49,6 +54,8 @@ export const INITIAL_BIRDS: Bird[] = [
     ageBoughtDays: 120,
     lastVaccinationDate: "2026-07-02",
     dateOfBirth: "2025-09-14",
+    breed: "Layer",
+    batchId: 1,
   },
   {
     id: 5,
@@ -219,4 +226,29 @@ export const INITIAL_EGG_PRODUCTION: EggProduction[] = [
     homeUse: 1,
     brokenWasted: 1,
   }
+];
+
+export const INITIAL_BATCHES: BirdBatch[] = [
+  { id: 1, name: 'January 2026 Batch', startDate: '2026-01-10', description: 'Main layer flock' },
+  { id: 2, name: 'Spring Batch', startDate: '2026-03-15', description: 'Mixed flock' },
+];
+
+export const INITIAL_VACCINATIONS: VaccinationRecord[] = [
+  { id: 1, birdId: 1, date: '2026-07-01', vaccineName: 'ND + IB', dose: '0.5ml', cost: 50 },
+  { id: 2, birdId: 4, date: '2026-07-02', vaccineName: 'ND + IB', dose: '0.5ml', cost: 50 },
+  { id: 3, birdId: 6, date: '2026-06-10', vaccineName: 'Fowl Pox', dose: '1 drop', cost: 30, notes: 'Wing web' },
+];
+
+export const INITIAL_CUSTOMERS: Customer[] = [
+  { id: 1, name: 'Ahmed Bhai', phone: '03001234567', notes: 'Daily buyer' },
+  { id: 2, name: 'Neighbour Aunty', phone: '03009876543' },
+];
+
+export const INITIAL_CUSTOMER_SALES: CustomerSale[] = [
+  { id: 1, customerId: 1, date: '2026-07-14', eggsQty: 10, pricePerEgg: 25, amountPaid: 250 },
+  { id: 2, customerId: 2, date: '2026-07-15', eggsQty: 6, pricePerEgg: 25, amountPaid: 100, notes: 'Rs 50 pending' },
+];
+
+export const INITIAL_INCUBATION: IncubationRecord[] = [
+  { id: 1, startDate: '2026-06-01', eggsSet: 24, hatchDate: '2026-06-22', hatched: 18, batchId: 2, notes: 'Good hatch rate' },
 ];

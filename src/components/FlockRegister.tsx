@@ -13,7 +13,7 @@ import {
   Syringe,
   Info
 } from 'lucide-react';
-import { Bird, Gender, BirdStatus, DeathReason } from '../types';
+import { Bird, Gender, BirdStatus, DeathReason, BirdBreed, Lang, BirdBatch } from '../types';
 
 interface FlockRegisterProps {
   birds: Bird[];
@@ -23,6 +23,10 @@ interface FlockRegisterProps {
   shouldOpenAddModal: boolean;
   onCloseAddModal: () => void;
   vaccinationIntervalDays: number;
+  lang?: Lang;
+  batches?: BirdBatch[];
+  canDelete?: boolean;
+  isAdmin?: boolean;
 }
 
 export default function FlockRegister({
@@ -46,9 +50,12 @@ export default function FlockRegister({
   // Form Fields
   const [name, setName] = useState('');
   const [gender, setGender] = useState<Gender>('Female');
+  const [breed, setBreed] = useState<BirdBreed>('Desi');
   const [dateBought, setDateBought] = useState(new Date().toISOString().split('T')[0]);
   const [price, setPrice] = useState('0');
   const [status, setStatus] = useState<BirdStatus>('Active');
+  const [salePrice, setSalePrice] = useState('');
+  const [saleDate, setSaleDate] = useState(new Date().toISOString().split('T')[0]);
   const [ageBoughtDays, setAgeBoughtDays] = useState('0');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [lastVaccinationDate, setLastVaccinationDate] = useState('');
@@ -70,9 +77,12 @@ export default function FlockRegister({
   const resetForm = () => {
     setName('');
     setGender('Female');
+    setBreed('Desi');
     setDateBought(new Date().toISOString().split('T')[0]);
     setPrice('0');
     setStatus('Active');
+    setSalePrice('');
+    setSaleDate(new Date().toISOString().split('T')[0]);
     setAgeBoughtDays('0');
     setDateOfBirth('');
     setLastVaccinationDate('');
@@ -141,9 +151,12 @@ export default function FlockRegister({
     onAddBird({
       name: name.trim(),
       gender,
+      breed,
       dateBought,
       price: parseFloat(price) || 0,
       status,
+      salePrice: status === 'Sold' ? (parseFloat(salePrice) || 0) : undefined,
+      saleDate: status === 'Sold' ? saleDate : undefined,
       ageBoughtDays: parseInt(ageBoughtDays) || 0,
       dateOfBirth: dateOfBirth || undefined,
       lastVaccinationDate: lastVaccinationDate || undefined,
@@ -161,9 +174,12 @@ export default function FlockRegister({
     setSelectedBird(bird);
     setName(bird.name);
     setGender(bird.gender);
+    setBreed(bird.breed || 'Desi');
     setDateBought(bird.dateBought);
     setPrice(bird.price.toString());
     setStatus(bird.status);
+    setSalePrice(bird.salePrice ? String(bird.salePrice) : '');
+    setSaleDate(bird.saleDate || new Date().toISOString().split('T')[0]);
     setAgeBoughtDays(bird.ageBoughtDays.toString());
     setDateOfBirth(bird.dateOfBirth || '');
     setLastVaccinationDate(bird.lastVaccinationDate || '');
@@ -188,9 +204,12 @@ export default function FlockRegister({
       ...selectedBird,
       name: name.trim(),
       gender,
+      breed,
       dateBought,
       price: parseFloat(price) || 0,
       status,
+      salePrice: status === 'Sold' ? (parseFloat(salePrice) || 0) : undefined,
+      saleDate: status === 'Sold' ? saleDate : undefined,
       ageBoughtDays: parseInt(ageBoughtDays) || 0,
       dateOfBirth: dateOfBirth || undefined,
       lastVaccinationDate: lastVaccinationDate || undefined,
@@ -340,7 +359,14 @@ export default function FlockRegister({
                     <h3 className="font-bold text-base text-gray-900 group-hover:text-blue-700 transition">
                       {bird.name}
                     </h3>
-                    <p className="text-xs text-gray-500 font-mono mt-0.5">ID: BRD-{bird.id.toString().padStart(3, '0')}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <p className="text-xs text-gray-500 font-mono">ID: BRD-{bird.id.toString().padStart(3, '0')}</p>
+                      {bird.breed && (
+                        <span className="px-1.5 py-0.5 bg-white/80 border border-slate-200 rounded text-3xs font-semibold text-slate-600">
+                          {bird.breed}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Attributes Panel */}
@@ -380,7 +406,18 @@ export default function FlockRegister({
                         )}
                       </div>
                     ) : isSold ? (
-                      <span className="text-slate-600 font-medium">Out of stock (Sold)</span>
+                      <div className="w-full space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-slate-600 font-medium">Sold for:</span>
+                          <span className="font-mono font-bold text-emerald-700">Rs {(bird.salePrice ?? 0).toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between text-3xs">
+                          <span className="text-slate-400">Profit/Loss vs purchase:</span>
+                          <span className={`font-mono font-bold ${((bird.salePrice ?? 0) - bird.price) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            Rs {((bird.salePrice ?? 0) - bird.price).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
                     ) : (
                       <div className="flex justify-between items-center w-full">
                         <span className="text-slate-500">Vaccine Status:</span>
@@ -454,6 +491,23 @@ export default function FlockRegister({
                 </div>
               </div>
 
+              <div>
+                <label className="block text-2xs font-bold text-gray-500 uppercase tracking-wider mb-1">Breed / Type</label>
+                <select 
+                  value={breed}
+                  onChange={(e) => setBreed(e.target.value as BirdBreed)}
+                  className="w-full text-xs px-3 py-2 border border-gray-200 rounded-xl focus:border-blue-400 focus:outline-hidden"
+                  id="add-bird-breed"
+                >
+                  <option value="Desi">Desi</option>
+                  <option value="Rhode Island">Rhode Island</option>
+                  <option value="Broiler">Broiler</option>
+                  <option value="Layer">Layer</option>
+                  <option value="Fayoumi">Fayoumi</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-2xs font-bold text-gray-500 uppercase tracking-wider mb-1">Price (Rs)</label>
@@ -524,6 +578,31 @@ export default function FlockRegister({
                   <option value="Dead">Dead (Deceased)</option>
                 </select>
               </div>
+
+              {/* Sale price input, shown when marking a bird as Sold */}
+              {status === 'Sold' && (
+                <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 space-y-2 animate-in fade-in duration-150">
+                  <label className="block text-3xs font-bold text-emerald-700 uppercase tracking-wider mb-1">Sale Price (Rs) *</label>
+                  <input 
+                    type="number"
+                    min="0"
+                    required
+                    placeholder="Amount received for this bird"
+                    value={salePrice}
+                    onChange={(e) => setSalePrice(e.target.value)}
+                    className="w-full text-xs px-3 py-2 border border-emerald-200 rounded-xl focus:border-emerald-400 focus:outline-hidden bg-white text-emerald-950"
+                  />
+                  <label className="block text-3xs font-bold text-emerald-700 uppercase tracking-wider mb-1 pt-1">Sale Date *</label>
+                  <input 
+                    type="date"
+                    required
+                    value={saleDate}
+                    onChange={(e) => setSaleDate(e.target.value)}
+                    className="w-full text-xs px-3 py-2 border border-emerald-200 rounded-xl focus:border-emerald-400 focus:outline-hidden bg-white text-emerald-950"
+                  />
+                  <p className="text-3xs text-emerald-700">This is tracked as income in your Financial Ledger totals.</p>
+                </div>
+              )}
 
               {/* Conditionally rendered Mortality inputs when Status == Dead */}
               {status === 'Dead' && (
@@ -630,6 +709,23 @@ export default function FlockRegister({
                 </div>
               </div>
 
+              <div>
+                <label className="block text-2xs font-bold text-gray-500 uppercase tracking-wider mb-1">Breed / Type</label>
+                <select 
+                  value={breed}
+                  onChange={(e) => setBreed(e.target.value as BirdBreed)}
+                  className="w-full text-xs px-3 py-2 border border-gray-200 rounded-xl focus:border-blue-400 focus:outline-hidden"
+                  id="edit-bird-breed"
+                >
+                  <option value="Desi">Desi</option>
+                  <option value="Rhode Island">Rhode Island</option>
+                  <option value="Broiler">Broiler</option>
+                  <option value="Layer">Layer</option>
+                  <option value="Fayoumi">Fayoumi</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-2xs font-bold text-gray-500 uppercase tracking-wider mb-1">Price (Rs)</label>
@@ -698,6 +794,31 @@ export default function FlockRegister({
                   <option value="Dead">Dead (Deceased)</option>
                 </select>
               </div>
+
+              {/* Sale price input, shown when marking a bird as Sold */}
+              {status === 'Sold' && (
+                <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 space-y-2 animate-in fade-in duration-150">
+                  <label className="block text-3xs font-bold text-emerald-700 uppercase tracking-wider mb-1">Sale Price (Rs) *</label>
+                  <input 
+                    type="number"
+                    min="0"
+                    required
+                    placeholder="Amount received for this bird"
+                    value={salePrice}
+                    onChange={(e) => setSalePrice(e.target.value)}
+                    className="w-full text-xs px-3 py-2 border border-emerald-200 rounded-xl focus:border-emerald-400 focus:outline-hidden bg-white text-emerald-950"
+                  />
+                  <label className="block text-3xs font-bold text-emerald-700 uppercase tracking-wider mb-1 pt-1">Sale Date *</label>
+                  <input 
+                    type="date"
+                    required
+                    value={saleDate}
+                    onChange={(e) => setSaleDate(e.target.value)}
+                    className="w-full text-xs px-3 py-2 border border-emerald-200 rounded-xl focus:border-emerald-400 focus:outline-hidden bg-white text-emerald-950"
+                  />
+                  <p className="text-3xs text-emerald-700">This is tracked as income in your Financial Ledger totals.</p>
+                </div>
+              )}
 
               {/* Conditionally rendered Mortality inputs when Status == Dead */}
               {status === 'Dead' && (
