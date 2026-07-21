@@ -73,7 +73,7 @@ export default function App() {
 
   const [isDark, setIsDark] = useState<boolean>(() => localStorage.getItem('flockfarm_dark_mode') === 'true');
   const [lang, setLang] = useState<Lang>(() => (localStorage.getItem('flockfarm_lang') as Lang) || 'en');
-  const [role, setRole] = useState<UserRole>(() => (localStorage.getItem('flockfarm_role') as UserRole) || 'admin');
+  const [role, setRole] = useState<UserRole>(() => (localStorage.getItem('flockfarm_role') as UserRole) || 'worker');
 
   const [dateRange, setDateRange] = useState<DateRange | null>(null);
   const [rangeFrom, setRangeFrom] = useState(daysAgoStr(30));
