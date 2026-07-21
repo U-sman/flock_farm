@@ -36,6 +36,7 @@ export default function HealthPortal({
   onAddVaccination,
   onDeleteVaccination,
   canDelete = true,
+  isAdmin = true,
 }: HealthPortalProps) {
   // --- B. MORTALITY ENGINE ---
   const deadBirds = birds.filter(b => b.status === 'Dead');
@@ -239,13 +240,15 @@ export default function HealthPortal({
                           <IconComponent className="w-3 h-3 shrink-0" /> {info.status}
                         </span>
                         
-                        <button 
-                          onClick={() => handleMarkVaccinated(bird)}
-                          className="px-2.5 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-3xs font-bold border border-indigo-100 transition shrink-0 flex items-center gap-0.5 cursor-pointer"
-                          title="Click to register vaccination today"
-                        >
-                          <Check className="w-3 h-3" /> Vaccine Today
-                        </button>
+                        {isAdmin && (
+                          <button 
+                            onClick={() => handleMarkVaccinated(bird)}
+                            className="px-2.5 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-3xs font-bold border border-indigo-100 transition shrink-0 flex items-center gap-0.5 cursor-pointer"
+                            title="Click to register vaccination today"
+                          >
+                            <Check className="w-3 h-3" /> Vaccine Today
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
@@ -338,7 +341,8 @@ export default function HealthPortal({
         </h3>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Add vaccination record form */}
+          {/* Add vaccination record form — Admin only */}
+          {isAdmin && (
           <form onSubmit={handleLogVaccinationSubmit} className="space-y-3 lg:col-span-1">
             <div>
               <label className="block text-2xs font-bold text-slate-500 uppercase tracking-wider mb-1">Bird *</label>
@@ -414,9 +418,10 @@ export default function HealthPortal({
               <Plus className="w-4 h-4" /> Log Vaccination Record
             </button>
           </form>
+          )}
 
           {/* History list */}
-          <div className="lg:col-span-2 space-y-2">
+          <div className={isAdmin ? "lg:col-span-2 space-y-2" : "lg:col-span-3 space-y-2"}>
             <h4 className="text-xs font-semibold text-slate-400 font-mono uppercase tracking-wider">
               Full History ({sortedVaccinations.length} records)
             </h4>

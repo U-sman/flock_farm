@@ -33,6 +33,8 @@ interface FinancialLedgerProps {
   onDeleteEggRecord: (date: string) => void;
   quickOpenTab: 'feed' | 'expense' | 'egg' | null;
   onResetQuickOpenTab: () => void;
+  isAdmin?: boolean;
+  canDelete?: boolean;
 }
 
 export default function FinancialLedger({
@@ -50,7 +52,9 @@ export default function FinancialLedger({
   onUpdateEggRecord,
   onDeleteEggRecord,
   quickOpenTab,
-  onResetQuickOpenTab
+  onResetQuickOpenTab,
+  isAdmin = true,
+  canDelete = true,
 }: FinancialLedgerProps) {
   // Main Sub-tabs: 'feed' | 'expense' | 'egg'
   const [activeSubTab, setActiveSubTab] = useState<'feed' | 'expense' | 'egg'>('feed');
@@ -295,6 +299,7 @@ export default function FinancialLedger({
       {activeSubTab === 'feed' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-150">
           {/* Data Entry Form */}
+          {isAdmin && (
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs h-fit space-y-4">
             <h3 className="font-bold text-sm text-slate-800 font-display flex items-center gap-2 border-b border-slate-100 pb-2">
               {editingFeedId !== null ? (
@@ -401,8 +406,10 @@ export default function FinancialLedger({
             </form>
           </div>
 
+          )}
+
           {/* Table / List */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className={isAdmin ? "lg:col-span-2 space-y-4" : "lg:col-span-3 space-y-4"}>
             {/* Quick Metrics */}
             <div className="grid grid-cols-2 gap-4 bg-amber-50/50 border border-amber-100 p-4 rounded-2xl">
               <div>
@@ -463,22 +470,28 @@ export default function FinancialLedger({
                             {record.notes || '-'}
                           </td>
                           <td className="p-3 text-right">
-                            <div className="flex justify-end gap-1">
-                              <button 
-                                onClick={() => startEditFeed(record)}
-                                className="text-gray-400 hover:text-indigo-600 transition p-1"
-                                title="Edit feed record"
-                              >
-                                <Pencil className="w-4 h-4" />
-                              </button>
-                              <button 
-                                onClick={() => { if (confirm('Delete feed record?')) onDeleteFeedRecord(record.id); }}
-                                className="text-gray-400 hover:text-red-600 transition p-1"
-                                title="Delete feed record"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
+                            {isAdmin ? (
+                              <div className="flex justify-end gap-1">
+                                <button 
+                                  onClick={() => startEditFeed(record)}
+                                  className="text-gray-400 hover:text-indigo-600 transition p-1"
+                                  title="Edit feed record"
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                </button>
+                                {canDelete && (
+                                  <button 
+                                    onClick={() => { if (confirm('Delete feed record?')) onDeleteFeedRecord(record.id); }}
+                                    className="text-gray-400 hover:text-red-600 transition p-1"
+                                    title="Delete feed record"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-3xs text-slate-300 italic">view only</span>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -499,6 +512,7 @@ export default function FinancialLedger({
       {activeSubTab === 'expense' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-150">
           {/* Data Entry Form */}
+          {isAdmin && (
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs h-fit space-y-4">
             <h3 className="font-bold text-sm text-gray-900 font-display flex items-center gap-2">
               {editingExpenseId !== null ? (
@@ -590,8 +604,10 @@ export default function FinancialLedger({
             </form>
           </div>
 
+          )}
+
           {/* Table / List */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className={isAdmin ? "lg:col-span-2 space-y-4" : "lg:col-span-3 space-y-4"}>
             {/* Quick Metrics */}
             <div className="grid grid-cols-1 gap-4 bg-rose-50/50 border border-rose-100 p-4 rounded-2xl">
               <div>
@@ -646,22 +662,28 @@ export default function FinancialLedger({
                             {record.notes || '-'}
                           </td>
                           <td className="p-3 text-right">
-                            <div className="flex justify-end gap-1">
-                              <button 
-                                onClick={() => startEditExpense(record)}
-                                className="text-gray-400 hover:text-indigo-600 transition p-1"
-                                title="Edit expense record"
-                              >
-                                <Pencil className="w-4 h-4" />
-                              </button>
-                              <button 
-                                onClick={() => { if (confirm('Delete operating expense record?')) onDeleteOtherExpense(record.id); }}
-                                className="text-gray-400 hover:text-red-600 transition p-1"
-                                title="Delete expense record"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
+                            {isAdmin ? (
+                              <div className="flex justify-end gap-1">
+                                <button 
+                                  onClick={() => startEditExpense(record)}
+                                  className="text-gray-400 hover:text-indigo-600 transition p-1"
+                                  title="Edit expense record"
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                </button>
+                                {canDelete && (
+                                  <button 
+                                    onClick={() => { if (confirm('Delete operating expense record?')) onDeleteOtherExpense(record.id); }}
+                                    className="text-gray-400 hover:text-red-600 transition p-1"
+                                    title="Delete expense record"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-3xs text-slate-300 italic">view only</span>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -682,6 +704,7 @@ export default function FinancialLedger({
       {activeSubTab === 'egg' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-150">
           {/* Data Entry Form */}
+          {isAdmin && (
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs h-fit space-y-4">
             <h3 className="font-bold text-sm text-gray-900 font-display flex items-center gap-2">
               {editingEggDate !== null ? (
@@ -790,8 +813,10 @@ export default function FinancialLedger({
             </form>
           </div>
 
+          )}
+
           {/* Table / List */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className={isAdmin ? "lg:col-span-2 space-y-4" : "lg:col-span-3 space-y-4"}>
             {/* Quick Metrics */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-yellow-50/50 border border-yellow-100 p-4 rounded-2xl">
               <div>
@@ -861,22 +886,28 @@ export default function FinancialLedger({
                               Rs {saleIncome.toLocaleString()}
                             </td>
                             <td className="p-3 text-right">
-                              <div className="flex justify-end gap-1">
-                                <button 
-                                  onClick={() => startEditEgg(record)}
-                                  className="text-gray-400 hover:text-indigo-600 transition p-1"
-                                  title="Edit egg record"
-                                >
-                                  <Pencil className="w-4 h-4" />
-                                </button>
-                                <button 
-                                  onClick={() => { if (confirm('Delete egg collection record?')) onDeleteEggRecord(record.date); }}
-                                  className="text-gray-400 hover:text-red-600 transition p-1"
-                                  title="Delete egg record"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
+                              {isAdmin ? (
+                                <div className="flex justify-end gap-1">
+                                  <button 
+                                    onClick={() => startEditEgg(record)}
+                                    className="text-gray-400 hover:text-indigo-600 transition p-1"
+                                    title="Edit egg record"
+                                  >
+                                    <Pencil className="w-4 h-4" />
+                                  </button>
+                                  {canDelete && (
+                                    <button 
+                                      onClick={() => { if (confirm('Delete egg collection record?')) onDeleteEggRecord(record.date); }}
+                                      className="text-gray-400 hover:text-red-600 transition p-1"
+                                      title="Delete egg record"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-3xs text-slate-300 italic">view only</span>
+                              )}
                             </td>
                           </tr>
                         );

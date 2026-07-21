@@ -82,6 +82,7 @@ export default function IncubationModule({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {canDelete && (
         <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3 text-xs">
           <h3 className="font-bold text-sm flex items-center gap-2">
             <Plus className="w-4 h-4" /> {editId ? t(lang, 'edit') : t(lang, 'add')}
@@ -104,8 +105,9 @@ export default function IncubationModule({
             )}
           </div>
         </form>
+        )}
 
-        <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div className={canDelete ? "lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" : "lg:col-span-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"}>
           <table className="w-full text-xs text-left">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-800 text-3xs uppercase text-slate-500">
@@ -129,9 +131,13 @@ export default function IncubationModule({
                     <td className="p-3 font-bold text-green-700">{rate}%</td>
                     <td className="p-3">{batch?.name ?? '—'}</td>
                     <td className="p-3 text-right space-x-1">
-                      <button type="button" onClick={() => startEdit(r)} className="p-1 text-slate-400 hover:text-indigo-600"><Pencil className="w-4 h-4" /></button>
-                      {canDelete && (
-                        <button type="button" onClick={() => { if (confirm('Delete?')) onDelete(r.id); }} className="p-1 text-slate-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                      {canDelete ? (
+                        <>
+                          <button type="button" onClick={() => startEdit(r)} className="p-1 text-slate-400 hover:text-indigo-600"><Pencil className="w-4 h-4" /></button>
+                          <button type="button" onClick={() => { if (confirm('Delete?')) onDelete(r.id); }} className="p-1 text-slate-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                        </>
+                      ) : (
+                        <span className="text-3xs text-slate-300 italic">view only</span>
                       )}
                     </td>
                   </tr>

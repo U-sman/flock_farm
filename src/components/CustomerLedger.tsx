@@ -100,6 +100,8 @@ export default function CustomerLedger({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {canDelete ? (
+          <>
         <form onSubmit={handleCustomerSubmit} className="bg-white dark:bg-slate-900 p-5 rounded-2xl border space-y-3 text-xs">
           <h3 className="font-bold">{editCustId ? t(lang, 'edit') : t(lang, 'add')} Customer</h3>
           <input required placeholder="Name" value={custName} onChange={(e) => setCustName(e.target.value)} className="w-full px-3 py-2 border rounded-xl" />
@@ -124,6 +126,12 @@ export default function CustomerLedger({
           </div>
           <button type="submit" className="w-full py-2 bg-green-700 text-white rounded-xl font-semibold">{t(lang, 'save')}</button>
         </form>
+          </>
+        ) : (
+          <div className="lg:col-span-2 bg-slate-100 border border-slate-200 rounded-2xl p-5 text-center">
+            <p className="text-xs font-semibold text-slate-500">👀 You're viewing in Worker mode — read-only. Switch to Admin to make changes.</p>
+          </div>
+        )}
       </div>
 
       <div className="bg-white dark:bg-slate-900 rounded-2xl border overflow-hidden">
@@ -147,9 +155,13 @@ export default function CustomerLedger({
                     Rs {bal.toLocaleString()}
                   </td>
                   <td className="p-3 text-right">
-                    <button type="button" onClick={() => { setEditCustId(c.id); setCustName(c.name); setCustPhone(c.phone ?? ''); setCustEmail(c.email ?? ''); }} className="p-1 text-slate-400 hover:text-indigo-600"><Pencil className="w-4 h-4" /></button>
-                    {canDelete && (
-                      <button type="button" onClick={() => { if (confirm('Delete customer?')) onDeleteCustomer(c.id); }} className="p-1 text-slate-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                    {canDelete ? (
+                      <>
+                        <button type="button" onClick={() => { setEditCustId(c.id); setCustName(c.name); setCustPhone(c.phone ?? ''); setCustEmail(c.email ?? ''); }} className="p-1 text-slate-400 hover:text-indigo-600"><Pencil className="w-4 h-4" /></button>
+                        <button type="button" onClick={() => { if (confirm('Delete customer?')) onDeleteCustomer(c.id); }} className="p-1 text-slate-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                      </>
+                    ) : (
+                      <span className="text-3xs text-slate-300 italic">view only</span>
                     )}
                   </td>
                 </tr>

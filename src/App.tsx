@@ -247,9 +247,11 @@ export default function App() {
   };
 
   const handleAddBird = (newBird: Omit<Bird, 'id'>) => {
+    if (!isAdmin) return;
     setBirds([...birds, { ...newBird, id: nextId(birds) }]);
   };
   const handleUpdateBird = (id: number, updatedBird: Bird) => {
+    if (!isAdmin) return;
     setBirds(birds.map((b) => (b.id === id ? updatedBird : b)));
   };
   const handleDeleteBird = (id: number) => {
@@ -271,9 +273,11 @@ export default function App() {
   };
 
   const handleAddFeedRecord = (newFeed: Omit<FeedRecord, 'id'>) => {
+    if (!isAdmin) return;
     setFeedRecords([...feedRecords, { ...newFeed, id: nextId(feedRecords) }]);
   };
   const handleUpdateFeedRecord = (id: number, feed: FeedRecord) => {
+    if (!isAdmin) return;
     setFeedRecords(feedRecords.map((f) => (f.id === id ? feed : f)));
   };
   const handleDeleteFeedRecord = (id: number) => {
@@ -282,6 +286,7 @@ export default function App() {
   };
 
   const handleAddEggRecord = (newEgg: EggProduction) => {
+    if (!isAdmin) return;
     const exists = eggProduction.some((ep) => ep.date === newEgg.date);
     if (exists) {
       setEggProduction(eggProduction.map((ep) => (ep.date === newEgg.date ? newEgg : ep)));
@@ -290,6 +295,7 @@ export default function App() {
     }
   };
   const handleUpdateEggRecord = (date: string, egg: EggProduction) => {
+    if (!isAdmin) return;
     setEggProduction(eggProduction.map((ep) => (ep.date === date ? egg : ep)));
   };
   const handleDeleteEggRecord = (date: string) => {
@@ -298,6 +304,7 @@ export default function App() {
   };
 
   const handleAddVaccination = (v: Omit<VaccinationRecord, 'id'>) => {
+    if (!isAdmin) return;
     const record = { ...v, id: nextId(vaccinations) };
     setVaccinations([...vaccinations, record]);
     setBirds(birds.map((b) => (b.id === v.birdId ? { ...b, lastVaccinationDate: v.date } : b)));
@@ -355,6 +362,7 @@ export default function App() {
   };
 
   const handleSaveChecklist = (entry: DailyChecklistEntry) => {
+    if (!isAdmin) return;
     const exists = checklist.some((c) => c.date === entry.date);
     if (exists) {
       setChecklist(checklist.map((c) => (c.date === entry.date ? entry : c)));
@@ -364,6 +372,7 @@ export default function App() {
   };
 
   const handleSaveDiary = (entry: DiaryEntry) => {
+    if (!isAdmin) return;
     const exists = diary.some((d) => d.date === entry.date);
     if (exists) {
       setDiary(diary.map((d) => (d.date === entry.date ? entry : d)));
@@ -376,15 +385,14 @@ export default function App() {
   const [quickOpenLedgerTab, setQuickOpenLedgerTab] = useState<'feed' | 'expense' | 'egg' | 'customers' | null>(null);
 
   const handleQuickAction = (actionType: 'bird' | 'egg' | 'expense' | 'feed') => {
+    if (!isAdmin) return;
     if (actionType === 'bird') {
-      if (!isAdmin) return;
       setActiveTab('flock');
       setShouldOpenAddBirdModal(true);
     } else if (actionType === 'egg') {
       setActiveTab('ledger');
       setQuickOpenLedgerTab('egg');
     } else if (actionType === 'expense') {
-      if (!isAdmin) return;
       setActiveTab('ledger');
       setQuickOpenLedgerTab('expense');
     } else if (actionType === 'feed') {
@@ -567,9 +575,9 @@ export default function App() {
                   onDeleteEggRecord={handleDeleteEggRecord}
                   quickOpenTab={quickOpenLedgerTab}
                   onResetQuickOpenTab={() => setQuickOpenLedgerTab(null)}
-                  canDelete={canDelete}
                   isAdmin={isAdmin}
-                />
+   canDelete={canDelete}
+   />
               )}
 
               {activeTab === 'customers' && (
@@ -616,8 +624,8 @@ export default function App() {
 
               {activeTab === 'operations' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <DailyChecklist lang={lang} entries={checklist} onSave={handleSaveChecklist} readOnly={false} />
-                  <DiaryNotes lang={lang} entries={diary} onSave={handleSaveDiary} readOnly={false} />
+                  <DailyChecklist lang={lang} entries={checklist} onSave={handleSaveChecklist} readOnly={!isAdmin} />
+                  <DiaryNotes lang={lang} entries={diary} onSave={handleSaveDiary} readOnly={!isAdmin} />
                 </div>
               )}
 

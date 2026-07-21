@@ -60,6 +60,7 @@ export default function Dashboard({
   rangeTo = '',
   onDateRangeChange,
   onDatePreset,
+  isAdmin = true,
 }: DashboardProps) {
   // --- 3. LIVE KPI DASHBOARD CALCULATIONS ---
   // All financial figures respect the selected date range (from the filter above);
@@ -524,53 +525,60 @@ export default function Dashboard({
         </div>
       </div>
 
-      {/* Quick Action Trigger Panel */}
-      <div className="bg-green-900 rounded-2xl p-6 relative overflow-hidden shadow-xs">
-        <div className="absolute right-0 bottom-0 translate-x-12 translate-y-12 opacity-10 pointer-events-none">
-          <Activity className="w-72 h-72 text-white" />
-        </div>
-        <div className="relative z-10 space-y-4">
-          <div>
-            <h3 className="text-base font-bold font-display text-white">Daily Egg & Feed Pulse</h3>
-            <p className="text-xs text-green-200 mt-1">Record purchases, update sales, log active flocks and ensure continuous feed stock.</p>
+      {/* Quick Action Trigger Panel — Admin only */}
+      {isAdmin ? (
+        <div className="bg-green-900 rounded-2xl p-6 relative overflow-hidden shadow-xs">
+          <div className="absolute right-0 bottom-0 translate-x-12 translate-y-12 opacity-10 pointer-events-none">
+            <Activity className="w-72 h-72 text-white" />
           </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <button 
-              onClick={() => openQuickAction('bird')} 
-              className="flex items-center justify-center gap-2 p-2.5 bg-green-800 hover:bg-green-700 text-white rounded-xl font-bold text-xs border border-green-700 transition duration-150 shadow-xs cursor-pointer"
-              id="btn-quick-log-bird"
-            >
-              <Plus className="w-4 h-4 text-green-300" />
-              <span>Log Bird</span>
-            </button>
-            <button 
-              onClick={() => openQuickAction('egg')} 
-              className="flex items-center justify-center gap-2 p-2.5 bg-green-800 hover:bg-green-700 text-white rounded-xl font-bold text-xs border border-green-700 transition duration-150 shadow-xs cursor-pointer"
-              id="btn-quick-log-eggs"
-            >
-              <Plus className="w-4 h-4 text-green-300" />
-              <span>Log Daily Eggs</span>
-            </button>
-            <button 
-              onClick={() => openQuickAction('expense')} 
-              className="flex items-center justify-center gap-2 p-2.5 bg-green-800 hover:bg-green-700 text-white rounded-xl font-bold text-xs border border-green-700 transition duration-150 shadow-xs cursor-pointer"
-              id="btn-quick-log-expense"
-            >
-              <Plus className="w-4 h-4 text-green-300" />
-              <span>Log Other Expense</span>
-            </button>
-            <button 
-              onClick={() => openQuickAction('feed')} 
-              className="flex items-center justify-center gap-2 p-2.5 bg-green-800 hover:bg-green-700 text-white rounded-xl font-bold text-xs border border-green-700 transition duration-150 shadow-xs cursor-pointer"
-              id="btn-quick-log-feed"
-            >
-              <Plus className="w-4 h-4 text-green-300" />
-              <span>Log Feed Purchase</span>
-            </button>
+          <div className="relative z-10 space-y-4">
+            <div>
+              <h3 className="text-base font-bold font-display text-white">Daily Egg & Feed Pulse</h3>
+              <p className="text-xs text-green-200 mt-1">Record purchases, update sales, log active flocks and ensure continuous feed stock.</p>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <button 
+                onClick={() => openQuickAction('bird')} 
+                className="flex items-center justify-center gap-2 p-2.5 bg-green-800 hover:bg-green-700 text-white rounded-xl font-bold text-xs border border-green-700 transition duration-150 shadow-xs cursor-pointer"
+                id="btn-quick-log-bird"
+              >
+                <Plus className="w-4 h-4 text-green-300" />
+                <span>Log Bird</span>
+              </button>
+              <button 
+                onClick={() => openQuickAction('egg')} 
+                className="flex items-center justify-center gap-2 p-2.5 bg-green-800 hover:bg-green-700 text-white rounded-xl font-bold text-xs border border-green-700 transition duration-150 shadow-xs cursor-pointer"
+                id="btn-quick-log-eggs"
+              >
+                <Plus className="w-4 h-4 text-green-300" />
+                <span>Log Daily Eggs</span>
+              </button>
+              <button 
+                onClick={() => openQuickAction('expense')} 
+                className="flex items-center justify-center gap-2 p-2.5 bg-green-800 hover:bg-green-700 text-white rounded-xl font-bold text-xs border border-green-700 transition duration-150 shadow-xs cursor-pointer"
+                id="btn-quick-log-expense"
+              >
+                <Plus className="w-4 h-4 text-green-300" />
+                <span>Log Other Expense</span>
+              </button>
+              <button 
+                onClick={() => openQuickAction('feed')} 
+                className="flex items-center justify-center gap-2 p-2.5 bg-green-800 hover:bg-green-700 text-white rounded-xl font-bold text-xs border border-green-700 transition duration-150 shadow-xs cursor-pointer"
+                id="btn-quick-log-feed"
+              >
+                <Plus className="w-4 h-4 text-green-300" />
+                <span>Log Feed Purchase</span>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="bg-slate-100 border border-slate-200 rounded-2xl p-5 text-center">
+          <p className="text-xs font-semibold text-slate-500">👀 You're viewing in Worker mode — read-only. Switch to Admin to make changes.</p>
+        </div>
+      )}
+
 
       {/* Mini Overview Layout: Recent Transactions & Active Dead Ratios */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
