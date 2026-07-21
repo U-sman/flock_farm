@@ -23,7 +23,8 @@ function printReport(
   title: string,
   headers: string[],
   rows: (string | number)[][],
-  footerRows?: (string | number)[][]
+  footerRows?: (string | number)[][],
+  preamble?: string
 ): void {
   const tableHead = headers.map((h) => `<th>${escapeHtml(h)}</th>`).join('');
   const tableBody = rows
@@ -57,6 +58,10 @@ function printReport(
     th { background: #0d9488; color: #fff; }
     tr:nth-child(even) td { background: #f8fafc; }
     tfoot tr.total td { font-weight: 700; background: #ecfdf5; border-top: 2px solid #0d9488; }
+    .preamble { margin-bottom: 14px; padding: 10px 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; font-size: 11px; }
+    .preamble h2 { margin: 0 0 6px; font-size: 12px; color: #0d9488; }
+    .preamble ul { margin: 0; padding-left: 16px; }
+    .preamble li { margin-bottom: 2px; }
     @media print {
       body { padding: 0; }
       @page { margin: 12mm; }
@@ -66,6 +71,7 @@ function printReport(
 <body>
   <h1>${escapeHtml(title)}</h1>
   <div class="meta">Generated: ${todayStr()}</div>
+  ${preamble ? `<div class="preamble">${preamble}</div>` : ''}
   <table>
     <thead><tr>${tableHead}</tr></thead>
     <tbody>${tableBody}</tbody>
@@ -193,11 +199,21 @@ export function exportExpensePDF(
     item.notes,
   ]);
 
+  // Feed kg summary preamble
+  const totalFeedKg = feedRecords.reduce((s, f) => s + f.quantityKg, 0);
+  const byType: Record<string, number> = {};
+  feedRecords.forEach(f => { byType[f.feedType] = (byType[f.feedType] || 0) + f.quantityKg; });
+  const typeLines = Object.entries(byType)
+    .map(([type, kg]) => `<li>${escapeHtml(type)}: <strong>${kg.toLocaleString()} kg</strong></li>`)
+    .join('');
+  const preamble = `<h2>🌾 Feed Usage Summary</h2><ul>${typeLines}<li><strong>Total: ${totalFeedKg.toLocaleString()} kg</strong></li></ul>`;
+
   printReport(
     'Flock Farm — Expense Report',
     ['Type', 'Date', 'Detail', 'Category', 'Amount', 'Notes'],
     rows,
-    [['', '', '', 'TOTAL EXPENSES', formatRs(total), '']]
+    [['', '', '', 'TOTAL EXPENSES', formatRs(total), '']],
+    preamble
   );
 }
 
@@ -323,7 +339,20 @@ export function exportExpenseExcel(
   const items = buildExpenseLineItems(birds, otherExpenses, feedRecords);
   const total = items.reduce((sum, item) => sum + item.amount, 0);
 
+  // Feed kg breakdown by type
+  const byType: Record<string, number> = {};
+  feedRecords.forEach(f => { byType[f.feedType] = (byType[f.feedType] || 0) + f.quantityKg; });
+  const totalFeedKg = feedRecords.reduce((s, f) => s + f.quantityKg, 0);
+
+  const feedSummaryRows: (string | number)[][] = [
+    ['--- FEED USAGE SUMMARY ---', '', '', '', '', ''],
+    ...Object.entries(byType).map(([type, kg]) => [`Feed Type: ${type}`, '', `${kg} kg`, '', '', '']),
+    ['Total Feed Used', '', `${totalFeedKg} kg`, '', '', ''],
+    ['', '', '', '', '', ''],
+  ];
+
   const rows = [
+    ...feedSummaryRows,
     ...items.map((item) => [
       item.type,
       item.date,

@@ -137,6 +137,7 @@ export interface MonthlySummaryItem {
   eggsCollected: number;
   birdPurchase: number;
   feedCost: number;
+  feedKg: number;
   otherExpenses: number;
 }
 

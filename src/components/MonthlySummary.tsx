@@ -59,10 +59,10 @@ export default function MonthlySummary({
         .filter(b => b.dateBought && b.dateBought.startsWith(month))
         .reduce((sum, b) => sum + (b.price || 0), 0);
 
-      // 2. Feed Cost in this month
-      const feedCost = feedRecords
-        .filter(f => f.date && f.date.startsWith(month))
-        .reduce((sum, f) => sum + (f.quantityKg * f.rateRsPerKg), 0);
+      // 2. Feed Cost & kg in this month
+      const monthFeedRecords = feedRecords.filter(f => f.date && f.date.startsWith(month));
+      const feedCost = monthFeedRecords.reduce((sum, f) => sum + (f.quantityKg * f.rateRsPerKg), 0);
+      const feedKg = monthFeedRecords.reduce((sum, f) => sum + f.quantityKg, 0);
 
       // 3. Other Expenses in this month
       const otherExpCost = otherExpenses
@@ -91,6 +91,7 @@ export default function MonthlySummary({
         eggsCollected,
         birdPurchase: birdExpense,
         feedCost,
+        feedKg,
         otherExpenses: otherExpCost,
       };
     });
@@ -202,6 +203,7 @@ export default function MonthlySummary({
                       <th className="p-3">Statement Month</th>
                       <th className="p-3 text-center">Eggs Collected</th>
                       <th className="p-3 text-right">Bird Purchase (Rs)</th>
+                      <th className="p-3 text-right">Feed Used (kg)</th>
                       <th className="p-3 text-right">Feed Cost (Rs)</th>
                       <th className="p-3 text-right">Other Expenses (Rs)</th>
                       <th className="p-3 text-right">Total Expenses (Rs)</th>
@@ -215,6 +217,7 @@ export default function MonthlySummary({
                         <td className="p-3 font-bold text-slate-800 font-display">{formatMonthName(item.month)}</td>
                         <td className="p-3 text-center font-mono font-bold text-slate-900">{item.eggsCollected}</td>
                         <td className="p-3 text-right font-mono text-indigo-800">Rs {item.birdPurchase.toLocaleString()}</td>
+                        <td className="p-3 text-right font-mono text-lime-800">{item.feedKg.toLocaleString()} kg</td>
                         <td className="p-3 text-right font-mono text-amber-800">Rs {item.feedCost.toLocaleString()}</td>
                         <td className="p-3 text-right font-mono text-slate-700">Rs {item.otherExpenses.toLocaleString()}</td>
                         <td className="p-3 text-right font-mono text-rose-800">Rs {item.totalExpense.toLocaleString()}</td>

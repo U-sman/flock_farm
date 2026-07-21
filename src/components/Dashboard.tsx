@@ -103,6 +103,16 @@ export default function Dashboard({
   // Birds Count
   const totalBirdsCount = birds.length;
   const activeBirdsCount = birds.filter(b => b.status === 'Active').length;
+
+  // Feed weight metrics (always current, not date-range filtered)
+  const _today = new Date();
+  const _todayStr = _today.toISOString().split('T')[0];
+  const _weekStart = (() => { const d = new Date(_today); d.setDate(d.getDate() - d.getDay()); return d.toISOString().split('T')[0]; })();
+  const _monthPrefix = _todayStr.slice(0, 7);
+  const feedKgToday = feedRecords.filter(f => f.date === _todayStr).reduce((s, f) => s + f.quantityKg, 0);
+  const feedKgThisWeek = feedRecords.filter(f => f.date >= _weekStart).reduce((s, f) => s + f.quantityKg, 0);
+  const feedKgThisMonth = feedRecords.filter(f => f.date.startsWith(_monthPrefix)).reduce((s, f) => s + f.quantityKg, 0);
+  const feedKgPerBird = activeBirdsCount > 0 ? feedKgThisMonth / activeBirdsCount : 0;
   const deadBirdsCount = birds.filter(b => b.status === 'Dead').length;
   const soldBirdsCount = birds.filter(b => b.status === 'Sold').length;
 
@@ -418,6 +428,62 @@ export default function Dashboard({
               </div>
             </div>
           )}
+
+          {/* Feed per Bird — kg this month ÷ active birds */}
+          {showMore && (
+            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-lime-100 shadow-xs flex items-center gap-3 sm:gap-4 hover:border-lime-200 hover:shadow-sm transition duration-150 animate-in fade-in zoom-in-95 duration-150" id="kpi-feed-per-bird">
+              <div className="p-2 sm:p-3 bg-lime-50 text-lime-600 rounded-xl shrink-0">
+                <Package className="w-5 h-5 sm:w-6 sm:h-6" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider leading-tight">Feed/Bird (Month)</p>
+                <h4 className="text-sm sm:text-xl font-bold font-mono text-slate-800 mt-0.5 truncate">{feedKgPerBird.toFixed(1)} kg</h4>
+                <p className="text-4xs sm:text-3xs text-slate-400 mt-0.5 leading-tight">kg per active bird</p>
+              </div>
+            </div>
+          )}
+
+          {/* Feed Used Today */}
+          {showMore && (
+            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 sm:gap-4 hover:border-slate-300 hover:shadow-sm transition duration-150 animate-in fade-in zoom-in-95 duration-150" id="kpi-feed-today">
+              <div className="p-2 sm:p-3 bg-green-50 text-green-600 rounded-xl shrink-0">
+                <Package className="w-5 h-5 sm:w-6 sm:h-6" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider leading-tight">Feed Today</p>
+                <h4 className="text-sm sm:text-xl font-bold font-mono text-slate-800 mt-0.5 truncate">{feedKgToday} kg</h4>
+                <p className="text-4xs sm:text-3xs text-slate-400 mt-0.5 leading-tight">Purchased today</p>
+              </div>
+            </div>
+          )}
+
+          {/* Feed Used This Week */}
+          {showMore && (
+            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 sm:gap-4 hover:border-slate-300 hover:shadow-sm transition duration-150 animate-in fade-in zoom-in-95 duration-150" id="kpi-feed-week">
+              <div className="p-2 sm:p-3 bg-teal-50 text-teal-600 rounded-xl shrink-0">
+                <Package className="w-5 h-5 sm:w-6 sm:h-6" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider leading-tight">Feed This Week</p>
+                <h4 className="text-sm sm:text-xl font-bold font-mono text-slate-800 mt-0.5 truncate">{feedKgThisWeek} kg</h4>
+                <p className="text-4xs sm:text-3xs text-slate-400 mt-0.5 leading-tight">Sun – today</p>
+              </div>
+            </div>
+          )}
+
+          {/* Feed Used This Month */}
+          {showMore && (
+            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-3 sm:gap-4 hover:border-slate-300 hover:shadow-sm transition duration-150 animate-in fade-in zoom-in-95 duration-150" id="kpi-feed-month">
+              <div className="p-2 sm:p-3 bg-indigo-50 text-indigo-600 rounded-xl shrink-0">
+                <Package className="w-5 h-5 sm:w-6 sm:h-6" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-2xs sm:text-xs text-slate-500 font-bold uppercase tracking-wider leading-tight">Feed This Month</p>
+                <h4 className="text-sm sm:text-xl font-bold font-mono text-slate-800 mt-0.5 truncate">{feedKgThisMonth} kg</h4>
+                <p className="text-4xs sm:text-3xs text-slate-400 mt-0.5 leading-tight">Current month total</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -585,7 +651,12 @@ export default function Dashboard({
         {/* Recent Financial Log */}
         <div className="bg-white p-6 rounded-2xl border border-slate-200 space-y-4 shadow-2xs">
           <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-            <h4 className="font-bold text-sm text-slate-800 font-display">Recent Operations</h4>
+            <div>
+              <h4 className="font-bold text-sm text-slate-800 font-display">Recent Operations</h4>
+              {feedKgThisWeek > 0 && (
+                <p className="text-3xs text-indigo-600 font-semibold mt-0.5">🌾 Feed this week: {feedKgThisWeek} kg</p>
+              )}
+            </div>
             <button 
               onClick={() => onNavigate('ledger')} 
               className="text-xs text-green-700 hover:text-green-800 hover:underline font-semibold"
